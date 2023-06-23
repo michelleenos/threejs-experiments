@@ -1,8 +1,7 @@
 import '../style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-// import GUI from 'lil-gui'
-import { Pane } from 'tweakpane'
+import { FolderApi, Pane } from 'tweakpane'
 
 const BG_COLOR = 0xe5e5e5
 
@@ -21,12 +20,6 @@ const camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera(
 )
 camera.position.z = 400
 
-const ambiLight = new THREE.AmbientLight(0x222222)
-scene.add(ambiLight)
-const dirLight = new THREE.DirectionalLight(0xffffff)
-dirLight.position.set(1, 0, 1)
-scene.add(dirLight)
-
 const shapes = createShapes()
 scene.add(shapes)
 
@@ -36,16 +29,32 @@ controls.update()
 
 const pane = new Pane()
 
-let dirLightFolder = pane.addFolder({ title: 'Directional light' })
-dirLightFolder.addInput(dirLight, 'position', { x: { step: 1 }, y: { step: 1 }, z: { step: 1 } })
-dirLightFolder.addInput(dirLight, 'color', { color: { type: 'float' } })
+makeDirectionalLight(scene, pane.addFolder({ title: 'Directional light' }))
+makeAmbientLight(scene, pane.addFolder({ title: 'Ambient Light' }))
 
-let ambLightFolder = pane.addFolder({ title: 'Ambient Light' })
-ambLightFolder.addInput(ambiLight, 'color', { color: { type: 'float', expanded: true } })
+function makeAmbientLight(scene: THREE.Scene, folder?: FolderApi) {
+   const light = new THREE.AmbientLight(0x222222)
+   if (folder) {
+      folder.addInput(light, 'color', { color: { type: 'float', expanded: true } })
+   }
+   scene.add(light)
+   return light
+}
+
+function makeDirectionalLight(scene: THREE.Scene, folder?: FolderApi) {
+   const light = new THREE.DirectionalLight(0xffffff)
+   light.position.set(1, 0, 1)
+   if (folder) {
+      folder.addInput(light, 'position', { x: { step: 1 }, y: { step: 1 }, z: { step: 1 } })
+      folder.addInput(light, 'color', { color: { type: 'float' } })
+   }
+   scene.add(light)
+   return light
+}
 
 function wonkyShape(radius = 5, vary = 1, color = 0xff3a20): THREE.Mesh {
    const geometry = new THREE.BoxGeometry(radius, radius, radius, 2, 2, 2)
-   // last 3 params are number of segmenets ... like how many triangles is the side divided into
+   // last 3 params are number of segments ... like how many triangles is the side divided into
    // more segments = more triangles = more vertices = funkier shapes (but also more processing)
    // with just 1 segment on each, it looks like a cube that's been wiggled a bit
    // with more segments, it's less & less like a cube
@@ -53,6 +62,7 @@ function wonkyShape(radius = 5, vary = 1, color = 0xff3a20): THREE.Mesh {
    // const geometry = new THREE.OctahedronGeometry(radius, 1)
 
    const positions = geometry.getAttribute('position') as THREE.BufferAttribute
+   // positions are all the vertices on the shape.
    const count = positions.count
    let point = new THREE.Vector3()
    let verticesMap: { [key: string]: { x: number; y: number; z: number } } = {}
@@ -84,10 +94,10 @@ function wonkyShape(radius = 5, vary = 1, color = 0xff3a20): THREE.Mesh {
    return mesh
 }
 
-function createShapes() {
+function createShapes(n = 100) {
    let object = new THREE.Object3D()
 
-   for (let i = 0; i < 100; i++) {
+   for (let i = 0; i < n; i++) {
       const mesh = wonkyShape()
       mesh.position.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize()
       mesh.position.multiplyScalar(Math.random() * 400)
