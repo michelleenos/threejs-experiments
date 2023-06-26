@@ -79,7 +79,7 @@ export class Scene {
    }
 
    pointLight = (opts: PointLightOpts = {}) => {
-      this.lights.push(makePointLight(this.scene, { ...opts, pane: this.pane }))
+      this.lights.push(makePointLight(this.scene, this.pane, { ...opts }))
    }
 
    ambiLight = (opts: AmbiLightOpts = {}) => {
