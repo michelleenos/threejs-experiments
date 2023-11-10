@@ -174,11 +174,7 @@ class GlowScene extends Scene {
          this.controls.enablePan = true
       }
 
-      // this.pointLight({ position: [0, 100, -100], color: 0xffffff, intensity: 0.5 })
-
       this.dirLight({ position: [0.5, 1, 0.2], color: 0xffffff, intensity: 0.5 })
-      // this.dirLight({ position: [-1, 1, 0.1], color: 0xffffff, intensity: 0.5 })
-      // this.dirLight({ position: [0, 0, 1.5], color: 0xffffff, intensity: 0.1 })
 
       this.glowBall = new GlowBall({ glowScale: 1.4, position: [-180, 0, -150] })
       if (this.pane) this.glowBall.controlPanel(this.pane)
