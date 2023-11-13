@@ -6,20 +6,56 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import fragmentShader from './frag.glsl'
 import vertexShader from './vert.glsl'
 
+function easeInQuad(x: number): number {
+   return x * x
+}
+
+function easeOutQuad(x: number): number {
+   return 1 - (1 - x) * (1 - x)
+}
+
+function easeOutQuint(x: number) {
+   return 1 - Math.pow(1 - x, 5)
+}
+
+function easeInQuint(x: number) {
+   return x * x * x * x * x
+}
+
+function easeInSine(x: number): number {
+   return 1 - Math.cos((x * Math.PI) / 2)
+}
+
+function easeOutSine(x: number): number {
+   return Math.sin((x * Math.PI) / 2)
+}
+
+function map(num: number, inMin: number, inMax: number, outMin: number, outMax: number) {
+   return ((num - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin
+}
+
 function lerp(start: number, end: number, amt: number) {
    return (1 - amt) * start + amt * end
+}
+
+function particleEasing(x: number) {
+   if (x < 0.5) {
+      return easeOutQuad(x * 2) / 2
+   } else {
+      return easeInQuad((x - 0.5) * 2) / 2 + 0.5
+   }
 }
 
 /**
  * Variables
  */
-const mousePos = new THREE.Vector2()
+const mousePos = new THREE.Vector2(0, 0)
 const sizes = new THREE.Vector2(window.innerWidth, window.innerHeight)
 const clock = new THREE.Clock()
 const props = {
-   separation: 3,
-   amountX: 50,
-   amountY: 50,
+   separation: 1,
+   amountX: 150,
+   amountY: 150,
 }
 
 const scene = new THREE.Scene()
@@ -28,34 +64,45 @@ const scene = new THREE.Scene()
  * Camera
  */
 const camera = new THREE.PerspectiveCamera(75, sizes.x / sizes.y, 1, 1000)
-camera.position.z = 50
+camera.position.z = 0
 camera.position.y = 100
-camera.position.x = 50
+camera.position.x = 10
 
 /**
  * Particles
  */
 
 // ***** Positions ***** //
+
+// const perRing = 100
 const numParticles = props.amountX * props.amountY
 const positions = new Float32Array(numParticles * 3)
 const scales = new Float32Array(numParticles)
 
-let xRange = props.amountX * props.separation
-let yRange = props.amountY * props.separation
+let planeWidth = props.amountX * props.separation
+let planeHeight = props.amountY * props.separation
 
 for (let ix = 0; ix < props.amountX; ix++) {
    for (let iy = 0; iy < props.amountY; iy++) {
       const index = ix * props.amountY + iy
-      const x = ix * props.separation - xRange / 2 + props.separation / 2
+      let posx = ix / props.amountX
+      let posy = iy / props.amountY
+
       const y = 0
-      const z = iy * props.separation - yRange / 2 + props.separation / 2
+      // const x =
+      //    particleEasing(posx) * props.amountX * props.separation -
+      //    planeWidth / 2 +
+      //    props.separation / 2
+      // const z =
+      //    particleEasing(posy) * props.amountY * props.separation -
+      //    planeHeight / 2 +
+      //    props.separation / 2
 
-      positions[index * 3] = x
+      positions[index * 3] = ix * props.separation - planeWidth / 2 + props.separation / 2
       positions[index * 3 + 1] = y
-      positions[index * 3 + 2] = z
+      positions[index * 3 + 2] = iy * props.separation - planeHeight / 2 + props.separation / 2
 
-      scales[index] = 1
+      scales[index] = Math.min(window.devicePixelRatio, 2.0)
    }
 }
 
@@ -68,7 +115,8 @@ const material = new THREE.ShaderMaterial({
    uniforms: {
       u_time: { value: 0 },
       u_mouse: { value: new THREE.Vector3() },
-      u_res: { value: new THREE.Vector3(xRange, 0, yRange) },
+      u_res: { value: new THREE.Vector3(planeWidth, 0, planeHeight) },
+      u_strength: { value: 0 },
    },
    vertexShader,
    fragmentShader,
@@ -84,9 +132,10 @@ scene.add(particles)
 
 // ***** Plane Geometry Helper ***** //
 const plane = new THREE.Mesh(
-   new THREE.PlaneGeometry(xRange, yRange),
+   new THREE.PlaneGeometry(planeWidth, planeHeight),
    new THREE.MeshBasicMaterial({
       color: 0xffffff,
+      side: THREE.DoubleSide,
    })
 )
 plane.rotation.x = -Math.PI / 2
@@ -123,27 +172,6 @@ function onPointerMove(event: PointerEvent) {
    mousePos.y = -(event.clientY / sizes.y) * 2 + 1
 }
 
-function onMouseClick(event: MouseEvent) {
-   // if (event.isPrimary === false) return
-
-   mousePos.x = (event.clientX / sizes.x) * 2 - 1
-   mousePos.y = -(event.clientY / sizes.y) * 2 + 1
-
-   raycaster.setFromCamera(mousePos, camera)
-   const intersects = raycaster.intersectObject(plane, false)
-
-   if (intersects[0]) {
-      material.uniforms.u_mouse.value = intersects[0].point
-      console.log(intersects[0].point)
-
-      if (info) {
-         info.innerHTML = `x: ${intersects[0].point.x.toFixed(
-            2
-         )}<br>y: ${intersects[0].point.y.toFixed(2)}<br>z: ${intersects[0].point.z.toFixed(2)}`
-      }
-   }
-}
-
 function onWindowResize() {
    sizes.x = window.innerWidth
    sizes.y = window.innerHeight
@@ -154,23 +182,39 @@ function onWindowResize() {
 }
 
 const info = document.querySelector('.info')
+const lastMouse = new THREE.Vector3(0, 0)
 
 function raycast() {
    raycaster.setFromCamera(mousePos, camera)
    const intersects = raycaster.intersectObject(plane, false)
+   const ustrength = material.uniforms.u_strength.value
+   const umouse = material.uniforms.u_mouse.value
 
    if (intersects[0]) {
       const point = intersects[0].point
-      const umouse = material.uniforms.u_mouse.value
-      // material.uniforms.u_mouse.value = intersects[0].point
-      material.uniforms.u_mouse.value.x = lerp(umouse.x, point.x, 0.1)
-      material.uniforms.u_mouse.value.y = lerp(umouse.y, point.y, 0.1)
-      material.uniforms.u_mouse.value.z = lerp(umouse.z, point.z, 0.1)
+      lastMouse.set(point.x, point.y, point.z)
+
+      // material.uniforms.u_strength.value = lerp(ustrength, 1, 0.1)
+      if (ustrength < 1) {
+         material.uniforms.u_strength.value = lerp(ustrength, 1, 0.03)
+      }
+      material.uniforms.u_mouse.value.x = lerp(umouse.x, point.x, 0.04)
+      material.uniforms.u_mouse.value.y = lerp(umouse.y, point.y, 0.04)
+      material.uniforms.u_mouse.value.z = lerp(umouse.z, point.z, 0.04)
 
       if (info) {
-         info.innerHTML = `x: ${intersects[0].point.x.toFixed(
+         info.innerHTML = `x: ${point.x.toFixed(2)}<br>y: ${point.y.toFixed(
             2
-         )}<br>y: ${intersects[0].point.y.toFixed(2)}<br>z: ${intersects[0].point.z.toFixed(2)}`
+         )}<br>z: ${point.z.toFixed(2)}`
+      }
+   } else {
+      if (ustrength > 0) {
+         material.uniforms.u_strength.value = lerp(ustrength, 0, 0.01)
+      }
+      if (lastMouse) {
+         material.uniforms.u_mouse.value.x = lerp(umouse.x, lastMouse.x, 0.04)
+         material.uniforms.u_mouse.value.y = lerp(umouse.y, lastMouse.y, 0.04)
+         material.uniforms.u_mouse.value.z = lerp(umouse.z, lastMouse.z, 0.04)
       }
    }
 }
@@ -179,10 +223,11 @@ function animate() {
    requestAnimationFrame(animate)
 
    const elapsedTime = clock.getElapsedTime()
+   // camera.position.z = Math.sin(elapsedTime * 0.1) * 100
+   // camera.position.x = Math.cos(elapsedTime * 0.1) * 100
+   // camera.position.y = Math.sin(elapsedTime * 0.1) * 100
 
    raycast()
-
-   // particles.rotation.x = elapsedTime * 0.1
 
    controls.update()
    material.uniforms.u_time.value = elapsedTime
