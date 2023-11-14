@@ -17,10 +17,11 @@ jobs:
               with:
                   node-version: ${{ matrix.node-version }}
                   cache: 'pnpm'
-            - name: Pnpm install
-              uses: jjs98/pnpm-install-action@v6
+            - uses: pnpm/action-setup@v2
+              name: Install pnpm
               with:
-                  directory: .
+                  version: 8
+                  run_install: true
             - run: pnpm run build
             - name: Deploy
               uses: peaceiris/actions-gh-pages@v3
