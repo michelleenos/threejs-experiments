@@ -19,12 +19,10 @@ uniform float u_innerSize;
 uniform float u_noiseSpeed;
 uniform float u_noiseVal;
 
-
 varying float v_dist;
 varying float v_toPointsCenter;
 
 float PI = 3.1415926;
-
 
 vec3 random3(vec3 c) {
   float j = 4096.0 * sin(dot(c, vec3(17.0, 59.4, 15.0)));

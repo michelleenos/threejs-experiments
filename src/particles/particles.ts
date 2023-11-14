@@ -11,6 +11,9 @@ function lerp(start: number, end: number, amt: number) {
    return (1 - amt) * start + amt * end
 }
 
+const showParticlesUI = true
+const showShaderUI = false
+
 const props = {
    separation: 1,
    perSide: 150,
@@ -33,8 +36,6 @@ const props = {
    freezeMouseToCenter: false,
 }
 
-console.log(props.color1)
-
 /**
  * Variables
  */
@@ -45,8 +46,6 @@ let planeHelper: THREE.Mesh
 let renderer: THREE.WebGLRenderer
 let controls: OrbitControls
 
-const gui = new GUI()
-gui.close()
 const info = document.querySelector('.info')
 
 const mousePos = new THREE.Vector2(1, 1)
@@ -151,19 +150,20 @@ function generatePoints() {
    planeHelper.rotation.x = -Math.PI / 2
    planeHelper.visible = false
    scene.add(planeHelper)
-
-   // ***** Update Controls ***** //
-   if (controls) {
-      // controls.maxDistance = Math.min(Math.max(planeWidth, planeHeight), camera.far - 50)
-   }
 }
 
 /**
  * GUI
  */
 
-// gui.add(props, 'freezeMouseToCenter')
-guiParticles(gui)
+if (showParticlesUI || showShaderUI) {
+   const gui = new GUI()
+   gui.close()
+
+   // gui.add(props, 'freezeMouseToCenter')
+   showParticlesUI && guiParticles(gui)
+   showShaderUI && guiShader(gui)
+}
 
 function guiParticles(folder: GUI) {
    folder.add(props, 'separation', 0.5, 7, 0.5).onFinishChange(generatePoints)

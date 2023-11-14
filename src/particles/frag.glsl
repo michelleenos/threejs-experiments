@@ -1,13 +1,12 @@
-uniform vec3 u_mouse;
 
 float PI = 3.1415926;
 
+uniform vec3 u_mouse;
 uniform vec3 u_color1;
 uniform vec3 u_color2;
 
 varying float v_dist;
 varying float v_toPointsCenter;
-
 
 void main() {
 
