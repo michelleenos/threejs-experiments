@@ -12,7 +12,7 @@ function lerp(start: number, end: number, amt: number) {
 }
 
 const showParticlesUI = true
-const showShaderUI = false
+const showShaderUI = true
 
 const props = {
    separation: 1,
@@ -160,9 +160,18 @@ if (showParticlesUI || showShaderUI) {
    const gui = new GUI()
    gui.close()
 
+   if (showParticlesUI && showShaderUI) {
+      let particlesFolder = gui.addFolder('Particles')
+      let shaderFolder = gui.addFolder('Shader Vars')
+      shaderFolder.close()
+      guiParticles(particlesFolder)
+      guiShader(shaderFolder)
+   } else {
+      showParticlesUI && guiParticles(gui)
+      showShaderUI && guiShader(gui)
+   }
+
    // gui.add(props, 'freezeMouseToCenter')
-   showParticlesUI && guiParticles(gui)
-   showShaderUI && guiShader(gui)
 }
 
 function guiParticles(folder: GUI) {
