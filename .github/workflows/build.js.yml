@@ -12,16 +12,15 @@ jobs:
                 node-version: [18.x]
         steps:
             - uses: actions/checkout@v3
-            - uses: pnpm/action-setup@v2
-              with:
-                  version: 7
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v4.0.0
               with:
                   node-version: ${{ matrix.node-version }}
                   cache: 'pnpm'
-            - name: Install dependencies
-              run: pnpm install
+            - name: Pnpm install
+              uses: jjs98/pnpm-install-action@v6
+              with:
+                  directory: .
             - run: pnpm run build
             - name: Deploy
               uses: peaceiris/actions-gh-pages@v3
