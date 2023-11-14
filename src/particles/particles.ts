@@ -6,45 +6,17 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import fragmentShader from './frag.glsl'
 import vertexShader from './vert.glsl'
 
-function easeInQuad(x: number): number {
-   return x * x
-}
-
-function easeOutQuad(x: number): number {
-   return 1 - (1 - x) * (1 - x)
-}
-
-function easeOutQuint(x: number) {
-   return 1 - Math.pow(1 - x, 5)
-}
-
-function easeInQuint(x: number) {
-   return x * x * x * x * x
-}
-
-function easeInSine(x: number): number {
-   return 1 - Math.cos((x * Math.PI) / 2)
-}
-
-function easeOutSine(x: number): number {
-   return Math.sin((x * Math.PI) / 2)
-}
-
-function map(num: number, inMin: number, inMax: number, outMin: number, outMax: number) {
-   return ((num - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin
-}
-
 function lerp(start: number, end: number, amt: number) {
    return (1 - amt) * start + amt * end
 }
 
-function particleEasing(x: number) {
-   if (x < 0.5) {
-      return easeOutQuad(x * 2) / 2
-   } else {
-      return easeInQuad((x - 0.5) * 2) / 2 + 0.5
-   }
-}
+// function particleEasing(x: number) {
+//    if (x < 0.5) {
+//       return easeOutQuad(x * 2) / 2
+//    } else {
+//       return easeInQuad((x - 0.5) * 2) / 2 + 0.5
+//    }
+// }
 
 /**
  * Variables
@@ -85,8 +57,6 @@ let planeHeight = props.amountY * props.separation
 for (let ix = 0; ix < props.amountX; ix++) {
    for (let iy = 0; iy < props.amountY; iy++) {
       const index = ix * props.amountY + iy
-      let posx = ix / props.amountX
-      let posy = iy / props.amountY
 
       const y = 0
       // const x =

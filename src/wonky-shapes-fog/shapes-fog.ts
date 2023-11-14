@@ -1,7 +1,5 @@
 import '../style.css'
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { FolderApi, Pane } from 'tweakpane'
 
 function lerp(start: number, end: number, amt: number) {
    return (1 - amt) * start + amt * end

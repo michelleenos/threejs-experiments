@@ -1,7 +1,6 @@
 import '../style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { FolderApi, Pane } from 'tweakpane'
 
 function map(num: number, inMin: number, inMax: number, outMin: number, outMax: number) {
    return ((num - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin
