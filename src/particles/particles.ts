@@ -156,6 +156,13 @@ renderer.setPixelRatio(window.devicePixelRatio)
 document.body.appendChild(renderer.domElement)
 
 const controls = new OrbitControls(camera, renderer.domElement)
+controls.maxDistance = 200
+controls.minDistance = 100
+controls.autoRotate = true
+controls.enableDamping = true
+controls.dampingFactor = 0.05
+controls.autoRotateSpeed = 3
+
 controls.update()
 
 const stats = new Stats()

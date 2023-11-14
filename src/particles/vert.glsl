@@ -111,8 +111,8 @@ void main() {
 	// pos.y -= sin(u_time * 3.0 + dist * 35.0 + cos(dist * 20.0)) * 10.0 * dist;
 	pos.y -= adjust_y * adjust_y_amt;
 
-	uv.x -= cos(angle) * (0.1 * push) * u_strength;
-	uv.y -= sin(angle) * (0.1 * push) * u_strength;
+	uv.x -= cos(angle) * (0.1 * push);
+	uv.y -= sin(angle) * (0.1 * push);
 	uv.x += cos(angle) * (0.2 * pull) * u_strength;
 	uv.y += sin(angle) * (0.2 * pull) * u_strength;
 	// convert uv.xy back to pos.xz
