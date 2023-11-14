@@ -67,29 +67,8 @@ float map(float value, float min1, float max1, float min2, float max2) {
 void main() {
 
 	vec3 pos = position;
-	// vec3 mouse = u_mouse;
-
-	// float toMouse = distance( pos, u_mouse );
-	// float d = toMouse;
-	// v_dist = d;
-
-
-	// v_angle = atan( pos.z - mouse.z, pos.x - mouse.x ) + PI;
-	// v_posangle = atan( pos.z, pos.x ) + PI;
-
-	// // pos += vec3(cos(u_time - d * 0.1), sin(u_time + pos.z * 0.3), cos(u_time + pos.z * 0.1));
-	// // pos.y += sin(u_time * 2.0 + d * 0.2) * 5.0;
-
-	// pos.x -= cos( v_angle ) * 10.0;
-	// pos.z -= sin( v_angle ) * 10.0;
-
-	// pos.y -= cos(u_time + val * 3.0) * 5.0;
-	// pos.x = cos(u_time + val * 3.0) * 5.0;
-
 
 	vec2 uv = (pos.xz + u_res.xz / 2.0) / u_res.xz;
-	// uv.x *= u_res.x / u_res.z;
-
 	vec2 mouse = (u_mouse.xz + u_res.xz / 2.0) / u_res.xz;
 
 	float dist = distance( uv, mouse );
@@ -97,24 +76,24 @@ void main() {
 	v_toPointsCenter = distance( uv, vec2(0.5, 0.5) );
 
 	float angle = atan( uv.y - mouse.y, uv.x - mouse.x ) + PI;
+	
 	float noise = snoise(vec3(uv.y * 20.0, uv.x * 20.0, u_time * 0.9));
+	
 	float edge = map(noise, -1.0, 1.0, 0.85, 0.9);
-	// float push = smoothstep(map(noise, -1.0, 1.0, 0.85, 0.9), 1.0, 1.0 - dist);
-	float push = smoothstep(edge, 1.0, 1.0 - dist);
-	// float pull = smoothstep(map(noise, -1.0, 1.0, 0.9, 0.1), 1.0, dist);
+	float push = smoothstep(edge, 1.0, 1.0 - dist) * 0.1;
+
 	float pull = smoothstep(0.3, 1.0, dist);
 	pull *= exp(pull);
 
 	float adjust_y = sin(u_time * 3.0 + dist * 35.0 + cos(dist * 20.0)) * 10.0 * dist;
 	float adjust_y_amt = smoothstep(1.0, 0.3, dist);
-	// adjust_y *= u_strength;
-	// pos.y -= sin(u_time * 3.0 + dist * 35.0 + cos(dist * 20.0)) * 10.0 * dist;
+	adjust_y *= max(u_strength, 0.7);
 	pos.y -= adjust_y * adjust_y_amt;
 
-	uv.x -= cos(angle) * (0.1 * push);
-	uv.y -= sin(angle) * (0.1 * push);
-	uv.x += cos(angle) * (0.2 * pull) * u_strength;
-	uv.y += sin(angle) * (0.2 * pull) * u_strength;
+	uv.x -= cos(angle) * push;
+	uv.y -= sin(angle) * push;
+	uv.x += cos(angle) * (0.1 * pull) * u_strength;
+	uv.y += sin(angle) * (0.1 * pull) * u_strength;
 	// convert uv.xy back to pos.xz
 	pos.x = uv.x * u_res.xz.x - u_res.xz.x / 2.0;
 	pos.z = uv.y * u_res.xz.y - u_res.xz.y / 2.0;

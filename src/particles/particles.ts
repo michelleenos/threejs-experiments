@@ -21,7 +21,7 @@ function lerp(start: number, end: number, amt: number) {
 /**
  * Variables
  */
-const mousePos = new THREE.Vector2(0, 0)
+const mousePos = new THREE.Vector2(1, 1)
 const sizes = new THREE.Vector2(window.innerWidth, window.innerHeight)
 const clock = new THREE.Clock()
 const props = {
@@ -36,9 +36,9 @@ const scene = new THREE.Scene()
  * Camera
  */
 const camera = new THREE.PerspectiveCamera(75, sizes.x / sizes.y, 1, 1000)
-camera.position.z = 0
-camera.position.y = 100
-camera.position.x = 10
+camera.position.z = 20
+camera.position.y = 70
+camera.position.x = 20
 
 /**
  * Particles
@@ -94,7 +94,6 @@ const material = new THREE.ShaderMaterial({
 
 material.transparent = true
 material.blending = THREE.AdditiveBlending
-// material.alphaTest = 0.001
 material.depthWrite = false
 
 const particles = new THREE.Points(geometry, material)
@@ -128,10 +127,9 @@ document.body.appendChild(renderer.domElement)
 const controls = new OrbitControls(camera, renderer.domElement)
 controls.maxDistance = 200
 controls.minDistance = 100
-controls.autoRotate = true
+// controls.autoRotate = true
 controls.enableDamping = true
 controls.dampingFactor = 0.05
-controls.autoRotateSpeed = 3
 
 controls.update()
 
@@ -159,7 +157,7 @@ function onWindowResize() {
 }
 
 const info = document.querySelector('.info')
-const lastMouse = new THREE.Vector3(0, 0)
+let lastMouse: THREE.Vector3
 
 function raycast() {
    raycaster.setFromCamera(mousePos, camera)
@@ -169,15 +167,16 @@ function raycast() {
 
    if (intersects[0]) {
       const point = intersects[0].point
+      if (!lastMouse) lastMouse = new THREE.Vector3()
       lastMouse.set(point.x, point.y, point.z)
 
       // material.uniforms.u_strength.value = lerp(ustrength, 1, 0.1)
       if (ustrength < 1) {
          material.uniforms.u_strength.value = lerp(ustrength, 1, 0.03)
       }
-      material.uniforms.u_mouse.value.x = lerp(umouse.x, point.x, 0.04)
-      material.uniforms.u_mouse.value.y = lerp(umouse.y, point.y, 0.04)
-      material.uniforms.u_mouse.value.z = lerp(umouse.z, point.z, 0.04)
+      material.uniforms.u_mouse.value.x = lerp(umouse.x, point.x, 0.02)
+      material.uniforms.u_mouse.value.y = lerp(umouse.y, point.y, 0.02)
+      material.uniforms.u_mouse.value.z = lerp(umouse.z, point.z, 0.02)
 
       if (info) {
          info.innerHTML = `x: ${point.x.toFixed(2)}<br>y: ${point.y.toFixed(
@@ -189,9 +188,9 @@ function raycast() {
          material.uniforms.u_strength.value = lerp(ustrength, 0, 0.01)
       }
       if (lastMouse) {
-         material.uniforms.u_mouse.value.x = lerp(umouse.x, lastMouse.x, 0.04)
-         material.uniforms.u_mouse.value.y = lerp(umouse.y, lastMouse.y, 0.04)
-         material.uniforms.u_mouse.value.z = lerp(umouse.z, lastMouse.z, 0.04)
+         material.uniforms.u_mouse.value.x = lerp(umouse.x, lastMouse.x, 0.02)
+         material.uniforms.u_mouse.value.y = lerp(umouse.y, lastMouse.y, 0.02)
+         material.uniforms.u_mouse.value.z = lerp(umouse.z, lastMouse.z, 0.02)
       }
    }
 }
