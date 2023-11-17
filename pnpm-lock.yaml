@@ -8,6 +8,9 @@ dependencies:
   '@types/node':
     specifier: ^18.15.13
     version: 18.18.9
+  cannon-es:
+    specifier: ^0.20.0
+    version: 0.20.0
   lil-gui:
     specifier: ^0.18.1
     version: 0.18.2
@@ -278,6 +281,10 @@ packages:
   /@types/webxr@0.5.8:
     resolution: {integrity: sha512-9vRpV4nMzuZIdJiu/nHUk1AQV0cguaBI32DIauJXBxpvG3wiXk3VD+kQKx111V7I/YvAoGyJZTyhaWODYEbZ0w==}
     dev: true
+
+  /cannon-es@0.20.0:
+    resolution: {integrity: sha512-eZhWTZIkFOnMAJOgfXJa9+b3kVlvG+FX4mdkpePev/w/rP5V8NRquGyEozcjPfEoXUlb+p7d9SUcmDSn14prOA==}
+    dev: false
 
   /esbuild@0.18.20:
     resolution: {integrity: sha512-ceqxoedUrcayh7Y7ZX6NdbbDzGROiyVBgC4PriJThBKSVPWnnFHZAkfI1lJT8QFkOwH4qOS2SJkS4wvpGl8BpA==}

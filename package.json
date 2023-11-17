@@ -18,6 +18,7 @@
    },
    "dependencies": {
       "@types/node": "^18.15.13",
+      "cannon-es": "^0.20.0",
       "lil-gui": "^0.18.1",
       "three": "^0.158.0",
       "tweakpane": "^3.1.8"
