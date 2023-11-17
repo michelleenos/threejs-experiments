@@ -33,6 +33,10 @@ const { ambientLight, directionalLight } = makeLights(
 )
 window.addEventListener('resize', resize)
 
+camera.position.z = -10
+camera.position.x = -5
+camera.position.y = 0.5
+
 /**
  * Physics World
  */
@@ -79,7 +83,7 @@ sphereInstance.count = params.nShapes
 sphereInstance.castShadow = true
 scene.add(sphereInstance)
 
-const boxGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5)
+const boxGeometry = new THREE.BoxGeometry(1, 1, 1)
 const boxInstance = new THREE.InstancedMesh(boxGeometry, instanceMaterial, shapeMaxCount)
 boxInstance.count = params.nShapes
 boxInstance.castShadow = true
@@ -135,14 +139,20 @@ const setBoxes = (n: number, instance: THREE.InstancedMesh, data: PhysicsData = 
       instance.setMatrixAt(i, matrix)
       instance.setColorAt(i, colors[i % colors.length])
 
-      const shape = new CANNON.Box(new CANNON.Vec3(scale / 2, scale / 2, scale / 2))
+      const mesh = new THREE.Mesh(boxGeometry, instanceMaterial)
+      mesh.scale.set(scale, scale, scale)
+      mesh.position.set(pos.x, pos.y, pos.z)
+      // scene.add(mesh)
+
+      const shape = new CANNON.Box(new CANNON.Vec3(scale * 0.5, scale * 0.5, scale * 0.5))
       const body = new CANNON.Body({
          mass: 1,
          shape,
       })
       body.position.set(pos.x, pos.y, pos.z)
+
       world.addBody(body)
-      data[i] = { scale, body }
+      data[i] = { scale, body, mesh }
    }
    if (instance.instanceColor) {
       instance.instanceColor.needsUpdate = true
@@ -171,12 +181,12 @@ document.body.addEventListener('click', (e) => {
    mouse.x = (e.clientX / sizes.width) * 2 - 1
    mouse.y = -(e.clientY / sizes.height) * 2 + 1
 
-   raycaster.setFromCamera(mouse, camera)
-   const mesh = boxMesh.clone()
+   // raycaster.setFromCamera(mouse, camera)
+   // const mesh = boxMesh.clone()
 
-   // raycaster.ray.at(camera.position.z, mesh.position)
-   raycaster.ray.intersectPlane(plane, mesh.position)
-   scene.add(mesh)
+   // // raycaster.ray.at(camera.position.z, mesh.position)
+   // raycaster.ray.intersectPlane(plane, mesh.position)
+   // scene.add(mesh)
 })
 
 /**
@@ -210,7 +220,7 @@ guiLightFolder(gui, directionalLight, params.directionalLight, 'Directional Ligh
  */
 setSpheres(params.nShapes, sphereInstance, spheresData)
 setBoxes(params.nShapes, boxInstance, boxesData)
-console.log(boxesData)
+// console.log(boxesData)
 
 let oldTime = 0
 function animate() {
@@ -242,7 +252,7 @@ function animate() {
    for (let i = 0; i < count; i++) {
       const matrix = new THREE.Matrix4()
 
-      let { body, scale } = boxesData[i]
+      let { body, scale, mesh } = boxesData[i]
       let position = body.position
       let quaternion = new THREE.Quaternion(
          body.quaternion.x,
@@ -250,10 +260,25 @@ function animate() {
          body.quaternion.z,
          body.quaternion.w
       )
+      // matrix.compose(
+      //    new THREE.Vector3(position.x, position.y, position.z),
+      //    quaternion,
+      //    new THREE.Vector3(scale * 2, scale * 2, scale * 2)
+      // )
 
-      matrix.makeRotationFromQuaternion(quaternion)
-      matrix.setPosition(position.x, position.y, position.z)
-      matrix.scale(new THREE.Vector3(scale, scale, scale))
+      // mesh.quaternion.copy(body.quaternion)
+      // mesh.position.copy(body.position)
+      // mesh.setRotationFromQuaternion(quaternion)
+      // mesh.position.set(position.x, position.y, position.z)
+
+      matrix.compose(
+         new THREE.Vector3(position.x, position.y, position.z),
+         quaternion,
+         new THREE.Vector3(scale, scale, scale)
+      )
+      // matrix.scale(new THREE.Vector3(scale, scale, scale))
+      // matrix.makeRotationFromQuaternion(quaternion)
+      // matrix.setPosition(position.x, position.y, position.z)
 
       boxInstance.setMatrixAt(i, matrix)
    }
