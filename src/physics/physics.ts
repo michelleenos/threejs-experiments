@@ -80,6 +80,8 @@ const sphereInstance = new THREE.InstancedMesh(sphereGeometry, instanceMaterial,
 const boxInstance = new THREE.InstancedMesh(boxGeometry, instanceMaterial, boxesMax)
 sphereInstance.castShadow = true
 boxInstance.castShadow = true
+boxInstance.receiveShadow = true
+sphereInstance.receiveShadow = true
 sphereInstance.count = 0
 boxInstance.count = 0
 
