@@ -1,55 +1,58 @@
 import '../style.css'
 import * as THREE from 'three'
-
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import GUI from 'lil-gui'
-import { random } from '../utils'
 import * as CANNON from 'cannon-es'
-import { setup, colors, makeLights, makeFloor, guiLightFolder } from './setup'
+import { setup, colors, makeLights, makeFloor, guiLightFolder, gray } from './setup'
+import { type PhysicsData, setInstanceItem, updateInstanceItem } from './geometries'
 
-let shapeMaxCount = 15
+let boxesMax = 300
+let spheresMax = 300
 
 const params = {
    floorMetalness: 0.3,
    floorRoughness: 0.6,
    shapeMetalness: 0.1,
    shapeRoughness: 0.5,
-   nShapes: 5,
+   fogColor: gray,
+   floorColor: gray,
    directionalLight: {
-      shadowMapSize: 1024,
-      intensity: 0.6,
+      intensity: 1,
       color: '#ffffff',
    },
-   ambientLight: {
-      intensity: 2,
-      color: '#ffffff',
+   ambientLight: { intensity: 1.5, color: '#ffffff' },
+   hemisphereLight: { intensity: 1, color: '#ffffff', groundColor: gray },
+   positions: {
+      x: { min: -4, max: 4 },
+      y: { min: 3, max: 3.5 },
+      z: { min: -3, max: 4 },
    },
+   scales: { min: 0.25, max: 0.5 },
 }
 
-const { sizes, stats, scene, renderer, camera, controls, clock, resize } = setup()
-const { ambientLight, directionalLight } = makeLights(
-   scene,
-   params.ambientLight,
-   params.directionalLight
-)
+const { sizes, stats, scene, renderer, camera, clock, resize } = setup()
+const { ambientLight, directionalLight } = makeLights(scene, params.ambientLight, params.directionalLight)
 window.addEventListener('resize', resize)
 
-camera.position.z = -10
-camera.position.x = -5
-camera.position.y = 0.5
+camera.position.set(0, 3, -10)
+camera.lookAt(scene.position)
+camera.updateProjectionMatrix()
+
+// const controls = new OrbitControls(camera, renderer.domElement)
 
 /**
  * Physics World
  */
-const world = new CANNON.World()
-world.gravity.set(0, -9.82, 0)
+const world = new CANNON.World({
+   gravity: new CANNON.Vec3(0, -9.82, 0),
+   allowSleep: true,
+})
 world.broadphase = new CANNON.SAPBroadphase(world)
-world.allowSleep = true
 
 const defaultMaterial = new CANNON.Material('default')
 const defaultContactMaterial = new CANNON.ContactMaterial(defaultMaterial, defaultMaterial, {
-   // friction: 50,
-   restitution: 0.8,
-   // contactEquationRelaxation: -44,
+   friction: 0.6,
+   restitution: 0.3,
 })
 
 world.defaultContactMaterial = defaultContactMaterial
@@ -58,171 +61,144 @@ world.defaultMaterial = defaultMaterial
 /**
  * Geometries
  */
-const floor = makeFloor(scene, scene.fog?.color, 15)
+const floor = makeFloor(scene, params.floorColor, 100, 100)
 floor.material.metalness = params.floorMetalness
 floor.material.roughness = params.floorRoughness
 
-const floorBody = new CANNON.Body({
-   shape: new CANNON.Plane(),
-})
-floorBody.quaternion.set(
-   floor.quaternion.x,
-   floor.quaternion.y,
-   floor.quaternion.z,
-   floor.quaternion.w
-)
+const floorBody = new CANNON.Body({ shape: new CANNON.Plane() })
+floorBody.position.set(floor.position.x, floor.position.y, floor.position.z)
+floorBody.quaternion.set(floor.quaternion.x, floor.quaternion.y, floor.quaternion.z, floor.quaternion.w)
 world.addBody(floorBody)
 
 const sphereGeometry = new THREE.SphereGeometry(1, 34, 34)
+const boxGeometry = new THREE.BoxGeometry(1, 1, 1)
 const instanceMaterial = new THREE.MeshStandardMaterial({
    metalness: params.shapeMetalness,
    roughness: params.shapeRoughness,
 })
-const sphereInstance = new THREE.InstancedMesh(sphereGeometry, instanceMaterial, shapeMaxCount)
-sphereInstance.count = params.nShapes
+const sphereInstance = new THREE.InstancedMesh(sphereGeometry, instanceMaterial, spheresMax)
+const boxInstance = new THREE.InstancedMesh(boxGeometry, instanceMaterial, boxesMax)
 sphereInstance.castShadow = true
-scene.add(sphereInstance)
-
-const boxGeometry = new THREE.BoxGeometry(1, 1, 1)
-const boxInstance = new THREE.InstancedMesh(boxGeometry, instanceMaterial, shapeMaxCount)
-boxInstance.count = params.nShapes
 boxInstance.castShadow = true
-const boxesData: PhysicsData = []
+sphereInstance.count = 0
+boxInstance.count = 0
 
-scene.add(boxInstance)
-
-type PhysicsData = { scale: number; body: CANNON.Body }[]
-const spheresData: PhysicsData = []
-
-const setSpheres = (n: number, instance: THREE.InstancedMesh, data: PhysicsData = []) => {
-   data.forEach(({ body }) => world.removeBody(body))
-   data.length = n
-   instance.count = n
-
-   for (let i = 0; i < n; i++) {
-      let pos = new THREE.Vector3(random(-4, 4), random(1, 5), random(-4, 4))
-      let scale = random(0.5, 1)
-      const matrix = new THREE.Matrix4()
-      matrix.setPosition(pos)
-      matrix.scale(new THREE.Vector3(scale, scale, scale))
-
-      instance.setMatrixAt(i, matrix)
-      instance.setColorAt(i, colors[i % colors.length])
-
-      const shape = new CANNON.Sphere(scale)
-      const body = new CANNON.Body({
-         mass: 1,
-         shape,
-      })
-      body.position.set(pos.x, pos.y, pos.z)
-      // body.applyForce(new CANNON.Vec3(-2, 0, 0), body.position)
-      world.addBody(body)
-      data[i] = { scale, body }
-   }
-   if (instance.instanceColor) {
-      instance.instanceColor.needsUpdate = true
-   }
+const boxesData = {
+   max: boxesMax,
+   physics: [] as PhysicsData,
+   toAdd: 30,
+   lastTimeAdded: 0,
+   lastAddedIndex: -1,
+   interval: 0.2,
 }
 
-const setBoxes = (n: number, instance: THREE.InstancedMesh, data: PhysicsData = []) => {
-   data.forEach(({ body }) => world.removeBody(body))
-   data.length = n
-   instance.count = n
-
-   for (let i = 0; i < n; i++) {
-      let pos = new THREE.Vector3(random(-4, 4), random(1, 5), random(-4, 4))
-      let scale = random(0.9, 2)
-      const matrix = new THREE.Matrix4()
-      matrix.setPosition(pos)
-      matrix.scale(new THREE.Vector3(scale, scale, scale))
-
-      instance.setMatrixAt(i, matrix)
-      instance.setColorAt(i, colors[i % colors.length])
-
-      const mesh = new THREE.Mesh(boxGeometry, instanceMaterial)
-      mesh.scale.set(scale, scale, scale)
-      mesh.position.set(pos.x, pos.y, pos.z)
-      // scene.add(mesh)
-
-      const shape = new CANNON.Box(new CANNON.Vec3(scale * 0.5, scale * 0.5, scale * 0.5))
-      const body = new CANNON.Body({
-         mass: 1,
-         shape,
-      })
-      body.position.set(pos.x, pos.y, pos.z)
-
-      world.addBody(body)
-      data[i] = { scale, body, mesh }
-   }
-   if (instance.instanceColor) {
-      instance.instanceColor.needsUpdate = true
-   }
+const spheresData = {
+   max: spheresMax,
+   physics: [] as PhysicsData,
+   toAdd: 20,
+   lastTimeAdded: 0,
+   lastAddedIndex: -1,
+   interval: 0.23,
 }
 
-const boxMaterial = new THREE.MeshStandardMaterial({
-   metalness: 0.3,
-   roughness: 0.6,
-   color: colors[0],
-})
-const boxMesh = new THREE.Mesh(boxGeometry, boxMaterial)
+scene.add(boxInstance, sphereInstance)
 
 /**
  * Mouse Stuff
  */
 const mouse = new THREE.Vector2()
+const mouseStart = new THREE.Vector2()
 const raycaster = new THREE.Raycaster()
-const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0))
-plane.translate(new THREE.Vector3(0, 3, 0))
+// the plane is rotated a little so that clicking higher above the plane further away still intersects
+const plane = new THREE.Plane(new THREE.Vector3(0, 1, -0.4))
+plane.translate(new THREE.Vector3(0, 1, 0))
 
-// const planeHelper = new THREE.PlaneHelper(plane, 100, 0xff0000)
+// const planeHelper = new THREE.PlaneHelper(plane, 30, 0xff0000)
 // scene.add(planeHelper)
 
-document.body.addEventListener('click', (e) => {
-   mouse.x = (e.clientX / sizes.width) * 2 - 1
-   mouse.y = -(e.clientY / sizes.height) * 2 + 1
+const onClick = () => {
+   raycaster.setFromCamera(mouse, camera)
 
-   // raycaster.setFromCamera(mouse, camera)
-   // const mesh = boxMesh.clone()
+   const newBoxPos = new THREE.Vector3()
+   const intersects = raycaster.ray.intersectPlane(plane, newBoxPos)
 
-   // // raycaster.ray.at(camera.position.z, mesh.position)
-   // raycaster.ray.intersectPlane(plane, mesh.position)
-   // scene.add(mesh)
+   if (!intersects) return
+   if (intersects.z > 7) newBoxPos.z = 7
+   if (intersects.y > 5) newBoxPos.y = 5
+
+   let i = (boxesData.lastAddedIndex + 1) % boxesData.max
+   if (boxInstance.count < i + 1) {
+      boxInstance.count = i + 1
+   }
+
+   setInstanceItem(i, boxInstance, 'box', boxesData.physics, world, newBoxPos, params.scales)
+   boxesData.lastAddedIndex = i
+}
+
+renderer.domElement.addEventListener('mousedown', (e) => {
+   mouseStart.x = e.clientX
+   mouseStart.y = e.clientY
+})
+renderer.domElement.addEventListener('mouseup', (e) => {
+   const diffX = Math.abs(mouseStart.x - e.clientX)
+   const diffY = Math.abs(mouseStart.y - e.clientY)
+
+   if (diffX < 5 && diffY < 5) {
+      mouse.x = (e.clientX / sizes.width) * 2 - 1
+      mouse.y = -(e.clientY / sizes.height) * 2 + 1
+      onClick()
+   }
 })
 
 /**
  * GUI
  */
 const gui = new GUI()
-gui.add(params, 'floorMetalness', 0, 1, 0.01).onChange(
-   (val: number) => (floor.material.metalness = val)
-)
-gui.add(params, 'floorRoughness', 0, 1, 0.01).onChange(
-   (val: number) => (floor.material.roughness = val)
-)
-gui.add(params, 'shapeMetalness', 0, 1, 0.01).onChange(
-   (val: number) => (instanceMaterial.metalness = val)
-)
-gui.add(params, 'shapeRoughness', 0, 1, 0.01).onChange(
-   (val: number) => (instanceMaterial.roughness = val)
-)
-gui.add(params, 'nShapes', 1, shapeMaxCount, 1).onChange((v: number) =>
-   setSpheres(v, sphereInstance, spheresData)
-)
-const guiButtons = {
-   reset: () => setSpheres(params.nShapes, sphereInstance, spheresData),
+gui.close()
+gui.add(params, 'floorMetalness', 0, 1, 0.01).onChange((val: number) => (floor.material.metalness = val))
+gui.add(params, 'floorRoughness', 0, 1, 0.01).onChange((val: number) => (floor.material.roughness = val))
+gui.add(params, 'shapeMetalness', 0, 1, 0.01).onChange((val: number) => (instanceMaterial.metalness = val))
+gui.add(params, 'shapeRoughness', 0, 1, 0.01).onChange((val: number) => (instanceMaterial.roughness = val))
+gui.addColor(params, 'fogColor').onChange((val: THREE.Color) => {
+   scene.fog?.color.set(val)
+   renderer.setClearColor(val)
+})
+gui.addColor(params, 'floorColor').onChange((val: THREE.Color) => floor.material.color.set(val))
+const guiBtns = {
+   add20Spheres: () => {
+      spheresData.toAdd += 20
+      spheresData.interval = 0.12
+      addSpheresBtn.disable()
+   },
+   add20Boxes: () => {
+      boxesData.toAdd += 20
+      boxesData.interval = 0.11
+      addBoxBtn.disable()
+   },
 }
-gui.add(guiButtons, 'reset').name('Reset Spheres')
+let addSpheresBtn = gui.add(guiBtns, 'add20Spheres')
+let addBoxBtn = gui.add(guiBtns, 'add20Boxes')
+addSpheresBtn.disable()
+addBoxBtn.disable()
+
 guiLightFolder(gui, ambientLight, params.ambientLight, 'Ambient Light')
 guiLightFolder(gui, directionalLight, params.directionalLight, 'Directional Light')
+// guiLightFolder(gui, hemisphereLight, params.hemisphereLight, 'Hemisphere Light')
 
 /**
  * Animate
  */
-setSpheres(params.nShapes, sphereInstance, spheresData)
-setBoxes(params.nShapes, boxInstance, boxesData)
-// console.log(boxesData)
+// setSpheres(params.nShapes, sphereInstance, spheresData)
+// setBoxes(params.nShapes, boxInstance, boxesData)
+
+// const controls = new OrbitControls(camera, renderer.domElement)
+// controls.enableZoom = false
+// let angle = controls.getPolarAngle()
+// controls.minPolarAngle = angle - 0.1
+// controls.maxPolarAngle = angle + 0.1
 
 let oldTime = 0
+
 function animate() {
    requestAnimationFrame(animate)
 
@@ -231,60 +207,38 @@ function animate() {
    oldTime = elapsedTime
 
    world.fixedStep()
+   if (boxesData.toAdd > 0 && elapsedTime - boxesData.lastTimeAdded > boxesData.interval) {
+      boxesData.lastTimeAdded = elapsedTime
+      let i = (boxesData.lastAddedIndex + 1) % boxesData.max
+      if (boxInstance.count < i + 1) boxInstance.count = i + 1
+      setInstanceItem(i, boxInstance, 'box', boxesData.physics, world, params.positions, params.scales)
+      boxesData.lastAddedIndex = i
+      boxesData.toAdd--
+   }
+
+   if (spheresData.toAdd > 0 && elapsedTime - spheresData.lastTimeAdded > spheresData.interval) {
+      spheresData.lastTimeAdded = elapsedTime
+      let i = (spheresData.lastAddedIndex + 1) % spheresData.max
+      if (sphereInstance.count < i + 1) sphereInstance.count = i + 1
+      setInstanceItem(i, sphereInstance, 'sphere', spheresData.physics, world, params.positions, params.scales)
+      spheresData.lastAddedIndex = i
+      spheresData.toAdd--
+   }
+
+   if (boxesData.toAdd === 0) addBoxBtn.enable()
+   if (spheresData.toAdd === 0) addSpheresBtn.enable()
 
    // ***** Update spheres ***** //
-   for (let i = 0; i < params.nShapes; i++) {
-      const matrix = new THREE.Matrix4()
-
-      // let position = spheresData[i].position
-      let { body, scale } = spheresData[i]
-      let position = body.position
-
-      matrix.setPosition(position.x, position.y, position.z)
-      matrix.scale(new THREE.Vector3(scale, scale, scale))
-
-      sphereInstance.setMatrixAt(i, matrix)
+   let spheresCount = sphereInstance.count
+   for (let i = 0; i < spheresCount; i++) {
+      updateInstanceItem(i, sphereInstance, spheresData.physics)
    }
-   sphereInstance.instanceMatrix.needsUpdate = true
 
    // ***** Update boxes ***** //
    let count = boxInstance.count
    for (let i = 0; i < count; i++) {
-      const matrix = new THREE.Matrix4()
-
-      let { body, scale, mesh } = boxesData[i]
-      let position = body.position
-      let quaternion = new THREE.Quaternion(
-         body.quaternion.x,
-         body.quaternion.y,
-         body.quaternion.z,
-         body.quaternion.w
-      )
-      // matrix.compose(
-      //    new THREE.Vector3(position.x, position.y, position.z),
-      //    quaternion,
-      //    new THREE.Vector3(scale * 2, scale * 2, scale * 2)
-      // )
-
-      // mesh.quaternion.copy(body.quaternion)
-      // mesh.position.copy(body.position)
-      // mesh.setRotationFromQuaternion(quaternion)
-      // mesh.position.set(position.x, position.y, position.z)
-
-      matrix.compose(
-         new THREE.Vector3(position.x, position.y, position.z),
-         quaternion,
-         new THREE.Vector3(scale, scale, scale)
-      )
-      // matrix.scale(new THREE.Vector3(scale, scale, scale))
-      // matrix.makeRotationFromQuaternion(quaternion)
-      // matrix.setPosition(position.x, position.y, position.z)
-
-      boxInstance.setMatrixAt(i, matrix)
+      updateInstanceItem(i, boxInstance, boxesData.physics)
    }
-   boxInstance.instanceMatrix.needsUpdate = true
-
-   controls.update()
 
    renderer.render(scene, camera)
    stats.update()
