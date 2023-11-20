@@ -116,6 +116,7 @@ export const guiLightFolder = (
    position = false
 ) => {
    let folder = gui.addFolder(name)
+   folder.close()
    params.intensity &&
       folder.add(params, 'intensity', 0, 4, 0.01).onChange((val: number) => (light.intensity = val))
 

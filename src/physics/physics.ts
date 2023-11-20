@@ -86,7 +86,7 @@ boxInstance.count = 0
 const boxesData = {
    max: boxesMax,
    physics: [] as PhysicsData,
-   toAdd: 30,
+   toAdd: 20,
    lastTimeAdded: 0,
    lastAddedIndex: -1,
    interval: 0.2,
@@ -154,16 +154,7 @@ renderer.domElement.addEventListener('mouseup', (e) => {
  * GUI
  */
 const gui = new GUI()
-gui.close()
-gui.add(params, 'floorMetalness', 0, 1, 0.01).onChange((val: number) => (floor.material.metalness = val))
-gui.add(params, 'floorRoughness', 0, 1, 0.01).onChange((val: number) => (floor.material.roughness = val))
-gui.add(params, 'shapeMetalness', 0, 1, 0.01).onChange((val: number) => (instanceMaterial.metalness = val))
-gui.add(params, 'shapeRoughness', 0, 1, 0.01).onChange((val: number) => (instanceMaterial.roughness = val))
-gui.addColor(params, 'fogColor').onChange((val: THREE.Color) => {
-   scene.fog?.color.set(val)
-   renderer.setClearColor(val)
-})
-gui.addColor(params, 'floorColor').onChange((val: THREE.Color) => floor.material.color.set(val))
+
 const guiBtns = {
    add20Spheres: () => {
       spheresData.toAdd += 20
@@ -180,6 +171,18 @@ let addSpheresBtn = gui.add(guiBtns, 'add20Spheres')
 let addBoxBtn = gui.add(guiBtns, 'add20Boxes')
 addSpheresBtn.disable()
 addBoxBtn.disable()
+
+let materialsFolder = gui.addFolder('Materials + Colors')
+materialsFolder.close()
+materialsFolder.add(params, 'floorMetalness', 0, 1, 0.01).onChange((val: number) => (floor.material.metalness = val))
+materialsFolder.add(params, 'floorRoughness', 0, 1, 0.01).onChange((val: number) => (floor.material.roughness = val))
+materialsFolder.add(params, 'shapeMetalness', 0, 1, 0.01).onChange((val: number) => (instanceMaterial.metalness = val))
+materialsFolder.add(params, 'shapeRoughness', 0, 1, 0.01).onChange((val: number) => (instanceMaterial.roughness = val))
+materialsFolder.addColor(params, 'fogColor').onChange((val: THREE.Color) => {
+   scene.fog?.color.set(val)
+   renderer.setClearColor(val)
+})
+materialsFolder.addColor(params, 'floorColor').onChange((val: THREE.Color) => floor.material.color.set(val))
 
 guiLightFolder(gui, ambientLight, params.ambientLight, 'Ambient Light')
 guiLightFolder(gui, directionalLight, params.directionalLight, 'Directional Light')
