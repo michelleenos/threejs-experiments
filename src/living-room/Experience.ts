@@ -1,6 +1,6 @@
 import * as THREE from 'three'
-import Sizes from '../utils/sizes'
-import Timer from '../utils/timer'
+import Sizes from '../utils/Sizes'
+import Timer from '../utils/Timer'
 import World from './World'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import Resources, { TextureSource, type GltfSource } from '../utils/Resources'
