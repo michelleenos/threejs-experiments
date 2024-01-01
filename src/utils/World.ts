@@ -11,7 +11,7 @@ export default class World {
 
    mouse: THREE.Vector2 = new THREE.Vector2()
 
-   constructor(sizes: Sizes, followMouse = false) {
+   constructor(sizes: Sizes) {
       this.sizes = sizes
       this.renderer = new THREE.WebGLRenderer({ antialias: true })
       this.renderer.setClearColor('#000')
