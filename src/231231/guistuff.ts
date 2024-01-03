@@ -6,7 +6,7 @@ export const lightGui = (
    gui: GUI,
    helper?: THREE.DirectionalLightHelper | THREE.PointLightHelper
 ) => {
-   const folder = gui.addFolder(light.type)
+   const folder = gui.addFolder(light.type).close()
    folder.addColor(light, 'color').onChange((val: string) => light.color.set(val))
    folder.add(light, 'intensity', 0, 100, 0.1)
    folder.add(light, 'visible')
@@ -15,9 +15,9 @@ export const lightGui = (
       return
    }
 
-   folder.add(light.position, 'x', -100, 100, 1)
-   folder.add(light.position, 'y', -100, 100, 1)
-   folder.add(light.position, 'z', -100, 100, 1)
+   folder.add(light.position, 'x', -300, 300, 1)
+   folder.add(light.position, 'y', -300, 300, 1)
+   folder.add(light.position, 'z', -300, 300, 1)
 
    if (light instanceof THREE.PointLight) {
       folder.add(light, 'distance', 0, 5000, 1)
@@ -26,11 +26,6 @@ export const lightGui = (
 
    if (helper) {
       folder.add(helper, 'visible').name('helper')
+      folder.onChange(() => helper.update())
    }
-
-   folder.onChange(() => {
-      if (helper) helper.update()
-   })
-
-   folder.close()
 }
