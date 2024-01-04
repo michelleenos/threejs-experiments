@@ -5,9 +5,10 @@ import Timer from '../utils/Timer'
 import World from '../utils/World'
 import { GUI } from 'lil-gui'
 import { lightGui } from './guistuff'
-import Floor from './Floor'
 import { Reflector } from 'three/examples/jsm/Addons.js'
 import { map } from '../utils'
+import { ShaderUtils } from '../utils/view-shaders'
+import ShapeChunk from './ShapeChunk'
 
 const params = {
    shapes: 18,
@@ -33,6 +34,7 @@ const params = {
    blueOffset: 0.27,
    wonkyVary: 1,
    wonkyRadius: 4,
+   cameraPos: new THREE.Vector3(0, 40, 100),
    clearColor: '#0c0911',
 }
 
@@ -42,11 +44,11 @@ const timer = new Timer()
 const sizes = new Sizes()
 
 const world = new World(sizes)
-world.camera.position.set(0, 30, 100)
+world.camera.position.copy(params.cameraPos)
 world.renderer.setClearColor(params.clearColor)
-world.camera.far = 5000
-
-const loader = new THREE.TextureLoader()
+world.camera.far = 500
+world.controls.maxPolarAngle = Math.PI * 0.5
+world.controls.minPolarAngle = Math.PI * 0
 
 /**
  * Lights
@@ -59,46 +61,15 @@ dirLight.position.set(25, -50, -25)
 
 const pointLight = new THREE.PointLight(0x8437ff, 9, 0, 0.1)
 pointLight.position.set(-25, 50, 25)
-const pointLightHelper = new THREE.PointLightHelper(pointLight, 5, '#ff00ff')
 world.scene.add(ambientLight, dirLight, pointLight)
 
-function wonkyShape(radius = 5, vary = 2) {
-   const geometry = new THREE.OctahedronGeometry(radius, 1)
-
-   const positions = geometry.getAttribute('position') as THREE.BufferAttribute
-   const count = positions.count
-   let point = new THREE.Vector3()
-   let verticesMap: { [key: string]: { x: number; y: number; z: number } } = {}
-
-   for (let i = 0; i < count; i++) {
-      point.fromBufferAttribute(positions, i)
-      let key = [point.x, point.y, point.z].join(',')
-
-      if (!verticesMap[key]) {
-         verticesMap[key] = {
-            x: point.x + Math.random() * vary,
-            y: point.y + Math.random() * vary,
-            z: point.z + Math.random() * vary,
-         }
-      }
-
-      let { x, y, z } = verticesMap[key]
-      positions.setXYZ(i, x, y, z)
-   }
-
-   geometry.computeVertexNormals()
-   return geometry
-}
-
-type WonkyShape = ReturnType<typeof wonkyShape>
+/**
+ * Shapes
+ */
 
 let outerGeometry: THREE.ConeGeometry
-type Shape = {
-   outer: THREE.Mesh<THREE.ConeGeometry, THREE.MeshStandardMaterial>
-   inner: THREE.Mesh<WonkyShape, THREE.MeshStandardMaterial>
-   group: THREE.Group
-}
-let shapes: Shape[] = []
+
+let shapeChunks: ShapeChunk[] = []
 const shapesGroup = new THREE.Group()
 
 const setShapes = () => {
@@ -106,56 +77,49 @@ const setShapes = () => {
       outerGeometry.dispose()
    }
    outerGeometry = new THREE.ConeGeometry(params.coneRadius, params.coneHeight, params.coneSegments)
-   if (shapes.length) {
-      shapes.forEach((shape) => {
-         shapesGroup.remove(shape.group)
-         shape.outer.material.dispose()
-         shape.inner.material.dispose()
+
+   if (shapeChunks.length) {
+      shapeChunks.forEach((shapeChunk) => {
+         shapesGroup.remove(shapeChunk)
+         shapeChunk.dispose()
       })
-      shapes = []
    }
 
+   shapeChunks = []
+
    for (let i = 0; i < params.shapes; i++) {
-      const outer = new THREE.Mesh(
-         outerGeometry,
-         new THREE.MeshStandardMaterial({
+      const shapeChunk = new ShapeChunk(outerGeometry, {
+         outerOptions: {
             opacity: params.shapeOpacity,
             metalness: params.shapeMetalness,
             roughness: params.shapeRoughness,
-            side: THREE.DoubleSide,
-            transparent: true,
-         })
-      )
-      const innerGeometry = wonkyShape(params.wonkyRadius, params.wonkyVary)
-      const innerMaterial = new THREE.MeshStandardMaterial({
-         metalness: params.innerMetalness,
-         roughness: params.innerRoughness,
+            color: '#fff',
+         },
+         innerOptions: {
+            geometryOptions: {
+               radius: params.wonkyRadius,
+               detail: 1,
+               vary: params.wonkyVary,
+            },
+            materialOptions: {
+               metalness: params.innerMetalness,
+               roughness: params.innerRoughness,
+            },
+         },
       })
-      // innerMaterial.onBeforeCompile = (shader) => {
-      //    console.log(shader)
-      // }
 
-      const inner = new THREE.Mesh(innerGeometry, innerMaterial)
-      const group = new THREE.Group()
-      group.add(outer, inner)
-      inner.position.y = -5
-
-      shapes.push({
-         outer,
-         inner,
-         group,
-      })
+      shapeChunks.push(shapeChunk)
    }
 
-   shapesGroup.add(...shapes.map((shape) => shape.group))
+   shapesGroup.add(...shapeChunks)
    setShapeProps()
 }
 
 const setShapeProps = () => {
-   shapes.forEach((shape, i) => {
-      shape.outer.material.opacity = params.shapeOpacity
-      shape.outer.material.metalness = params.shapeMetalness
-      shape.outer.material.roughness = params.shapeRoughness
+   shapeChunks.forEach((shapeChunk, i) => {
+      shapeChunk.outer.material.opacity = params.shapeOpacity
+      shapeChunk.outer.material.metalness = params.shapeMetalness
+      shapeChunk.outer.material.roughness = params.shapeRoughness
 
       const getColorVal = (start: number, end: number, offset: number) => {
          const param = i / params.shapes + offset
@@ -165,21 +129,16 @@ const setShapeProps = () => {
       let green = getColorVal(params.greenStart, params.greenEnd, params.greenOffset)
       let blue = getColorVal(params.blueStart, params.blueEnd, params.blueOffset)
 
-      // let redInner = getColorVal(params.redStart, params.redEnd, params.redOffset + 0.5)
-      // let greenInner = getColorVal(params.greenStart, params.greenEnd, params.greenOffset + 0.5)
-      // let blueInner = getColorVal(params.blueStart, params.blueEnd, params.blueOffset + 0.5)
-
-      shape.outer.material.color = new THREE.Color(red, green, blue)
-      // shape.inner.material.color = new THREE.Color(redInner, greenInner, blueInner)
-      shape.inner.material.color = new THREE.Color(red, green, blue)
-      shape.outer.material.needsUpdate = true
-      shape.inner.material.needsUpdate = true
+      shapeChunk.outer.material.color = new THREE.Color(red, green, blue)
+      shapeChunk.inner.material.color = new THREE.Color(red, green, blue)
+      shapeChunk.outer.material.needsUpdate = true
+      shapeChunk.inner.material.needsUpdate = true
 
       const angle = (i / params.shapes) * Math.PI * 2 + params.startingAngle
-      shape.group.position.x = Math.cos(angle) * params.shapesRadius
-      shape.group.position.z = Math.sin(angle) * params.shapesRadius
-      shape.group.lookAt(0, 0, 0)
-      shape.group.rotateX(params.shapesRotation)
+      shapeChunk.position.x = Math.cos(angle) * params.shapesRadius
+      shapeChunk.position.z = Math.sin(angle) * params.shapesRadius
+      shapeChunk.lookAt(0, 0, 0)
+      shapeChunk.rotateX(params.shapesRotation)
    })
 }
 
@@ -189,18 +148,6 @@ world.scene.add(shapesGroup)
 /**
  * Floor
  */
-// const floor = new THREE.Mesh(
-//    new THREE.PlaneGeometry(1000, 1000),
-//    new THREE.MeshStandardMaterial({
-//       roughness: 0,
-//       metalness: 0.5,
-//       transparent: true,
-//       opacity: 0.5,
-//       color: '#ffffff',
-//    })
-// )
-// floor.receiveShadow = true
-// floor.rotateX(-Math.PI / 2)
 
 const mirrorParams = {
    clipBias: 0.003,
@@ -211,7 +158,7 @@ const mirrorParams = {
    floorRoughness: 0.63,
    positionY: -10,
    positionX: -25,
-   positionZ: 25,
+   positionZ: -25,
    planeDist: 0.1,
    rotationX: Math.PI * -0.5,
    rotationY: 0,
@@ -263,7 +210,6 @@ const setMirror = () => {
 
    world.scene.add(mirror, floor)
 }
-// world.scene.add(floor)
 setMirror()
 
 /**
@@ -272,6 +218,13 @@ setMirror()
 gui.addColor(params, 'clearColor').onChange((val: string) => {
    world.renderer.setClearColor(val)
 })
+
+world.controls.enabled = false
+gui.add(world.controls, 'enabled')
+   .name('controls')
+   .onChange((val: boolean) => {
+      if (!val) world.camera.position.copy(params.cameraPos)
+   })
 
 let lightsFolder = gui.addFolder('Lights').close()
 lightGui(ambientLight, lightsFolder)
@@ -326,14 +279,38 @@ colorsFolder.onChange(setShapeProps)
 
 gui.close()
 
-// shapes[0].inner.
+// new ShaderUtils(world.renderer, world.scene, world.camera, shapes[0].inner)
+
+let wheelDelta = 0
+window.addEventListener('wheel', (e) => {
+   console.log(e)
+   if (Math.abs(e.deltaY) > Math.abs(wheelDelta)) {
+      wheelDelta = e.deltaY
+   }
+})
+
 // Animate
-function animate(time: number) {
-   shapes.forEach(({ inner, outer }) => {
-      inner.rotateY(0.01)
-      inner.rotateZ(0.01)
-      inner.rotateX(-0.01)
+function animate() {
+   const time = timer.elapsed
+
+   shapeChunks.forEach((shapeChunk) => {
+      shapeChunk.inner.tick(time * 0.001)
    })
+
+   if (wheelDelta !== 0) {
+      let rotationCurrent = shapesGroup.rotation.y
+      let rotationTarget = rotationCurrent + wheelDelta * 0.0005
+      shapesGroup.rotation.y = rotationTarget
+
+      if (Math.abs(rotationTarget - rotationCurrent) < 0.00001) {
+         wheelDelta = 0
+      } else if (wheelDelta > 0) {
+         wheelDelta -= 1
+      } else if (wheelDelta < 0) {
+         wheelDelta += 1
+      }
+   }
+
    world.render()
 }
 
