@@ -1,24 +1,93 @@
 import * as THREE from 'three'
 
-export type WonkyShapeOptions = {
-   geometryOptions?: WonkyGeometryOptions
-   materialOptions?: {
-      color?: string
-      metalness?: number
-      roughness?: number
+export interface WonkyShapeOptions extends WonkyGeometryOptions, WonkyMaterialOptions {
+   radius?: number
+}
+
+export type WonkyMaterialOptions = {
+   color?: string
+   metalness?: number
+   roughness?: number
+}
+
+export type WonkyGeometryOptions = {
+   detail?: number
+   vary?: number
+}
+
+export class WonkyGeometry extends THREE.OctahedronGeometry {
+   _vary: number
+   initPositions: THREE.BufferAttribute
+
+   constructor({ detail = 1, vary = 2 }: WonkyGeometryOptions = {}) {
+      super(1, detail)
+      this._vary = vary
+
+      this.initPositions = this.getAttribute('position').clone()
+
+      this.setPositions()
+   }
+
+   set vary(vary: number) {
+      this._vary = vary
+      this.setPositions()
+   }
+
+   get vary() {
+      return this._vary
+   }
+
+   setPositions = () => {
+      let count = this.initPositions.count
+      let point = new THREE.Vector3()
+
+      this.setAttribute('position', this.initPositions.clone())
+      let currentPositions = this.getAttribute('position')
+
+      let verticesMap: { [key: string]: { x: number; y: number; z: number } } = {}
+
+      for (let i = 0; i < count; i++) {
+         point.fromBufferAttribute(this.initPositions, i)
+         let key = `${point.x.toFixed(2)}_${point.y.toFixed(2)}_${point.z.toFixed(2)}`
+         if (!verticesMap[key]) {
+            verticesMap[key] = {
+               x: point.x + (Math.random() - 0.5) * this._vary,
+               y: point.y + (Math.random() - 0.5) * this._vary,
+               z: point.z + (Math.random() - 0.5) * this._vary,
+            }
+         }
+
+         let { x, y, z } = verticesMap[key]
+         currentPositions.setXYZ(i, x, y, z)
+      }
+
+      this.computeVertexNormals()
    }
 }
 
 export default class WonkyShape extends THREE.Mesh<WonkyGeometry, WonkyMaterial> {
-   constructor({ geometryOptions = {}, materialOptions = {} }: WonkyShapeOptions) {
-      let geometry = new WonkyGeometry(geometryOptions)
-      let material = new WonkyMaterial({
-         color: materialOptions.color,
-         metalness: materialOptions.metalness,
-         roughness: materialOptions.roughness,
-      })
+   _radius: number
 
+   constructor({ detail, radius = 5, color, metalness, roughness, vary }: WonkyShapeOptions = {}) {
+      let geometry = new WonkyGeometry({ detail, vary })
+      let material = new WonkyMaterial({
+         color,
+         metalness,
+         roughness,
+      })
       super(geometry, material)
+
+      this._radius = radius
+      this.scale.set(radius, radius, radius)
+   }
+
+   set radius(radius: number) {
+      this._radius = radius
+      this.scale.set(radius, radius, radius)
+   }
+
+   get radius() {
+      return this._radius
    }
 
    tick = (time: number) => {
@@ -59,9 +128,9 @@ export class WonkyMaterial extends THREE.MeshStandardMaterial {
          `#include <begin_vertex>`,
          `#include <begin_vertex>
 
-      transformed.x += noiseadd(vec2(uTime + transformed.y, transformed.x)) - 0.5;
-         transformed.y += noiseadd(vec2(uTime - transformed.x, transformed.z)) - 0.5;
-         transformed.z += noiseadd(vec2(uTime + transformed.z, transformed.y)) - 0.5;`
+      transformed.x += noiseadd(vec2(uTime + transformed.y, transformed.x)) * 0.5 - 0.25;
+         transformed.y += noiseadd(vec2(uTime - transformed.x, transformed.z)) * 0.5 - 0.25;
+         transformed.z += noiseadd(vec2(uTime + transformed.z, transformed.y)) * 0.5 - 0.25;`
       )
    }
 
@@ -69,55 +138,5 @@ export class WonkyMaterial extends THREE.MeshStandardMaterial {
       if (this.shader) {
          this.shader.uniforms.uTime.value = time
       }
-   }
-}
-
-export type WonkyGeometryOptions = {
-   radius?: number
-   detail?: number
-   vary?: number
-}
-export class WonkyGeometry extends THREE.OctahedronGeometry {
-   _vary: number
-
-   constructor({ radius = 5, detail = 1, vary = 2 }: WonkyGeometryOptions = {}) {
-      super(radius, detail)
-      this._vary = vary
-
-      this.setPositions()
-   }
-
-   set vary(vary: number) {
-      this._vary = vary
-      this.setPositions()
-   }
-
-   get vary() {
-      return this._vary
-   }
-
-   setPositions = () => {
-      let positions = this.getAttribute('position')
-      let count = positions.count
-      let point = new THREE.Vector3()
-
-      let verticesMap: { [key: string]: { x: number; y: number; z: number } } = {}
-
-      for (let i = 0; i < count; i++) {
-         point.fromBufferAttribute(positions, i)
-         let key = `${point.x.toFixed(2)}_${point.y.toFixed(2)}_${point.z.toFixed(2)}`
-         if (!verticesMap[key]) {
-            verticesMap[key] = {
-               x: point.x + Math.random() * this._vary,
-               y: point.y + Math.random() * this._vary,
-               z: point.z + Math.random() * this._vary,
-            }
-         }
-
-         let { x, y, z } = verticesMap[key]
-         positions.setXYZ(i, x, y, z)
-      }
-
-      this.computeVertexNormals()
    }
 }
