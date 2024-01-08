@@ -7,6 +7,7 @@ import { GUI } from 'lil-gui'
 import { lightGui } from './guistuff'
 import Ring from './Ring'
 import FloorMirror from './FloorMirror'
+import Mouse from '../utils/Mouse'
 
 const params = {
    cameraPos: new THREE.Vector3(0, 40, 100),
@@ -17,8 +18,9 @@ const gui = new GUI()
 
 const timer = new Timer()
 const sizes = new Sizes()
-
+const mouse = new Mouse(sizes)
 const world = new World(sizes)
+
 world.camera.position.copy(params.cameraPos)
 world.renderer.setClearColor(params.clearColor)
 world.camera.far = 500
@@ -30,22 +32,22 @@ world.controls.minPolarAngle = Math.PI * 0
  */
 const ambientLight = new THREE.AmbientLight('#fafafa', 0.5)
 ambientLight.visible = false
-const dirLight = new THREE.DirectionalLight('#ffffff', 1.8)
-dirLight.position.set(25, -50, -25)
+const dirLight = new THREE.DirectionalLight('#e5ffff', 4.0)
+dirLight.position.set(-150, -6, -30)
 // const dirLightHelper = new THREE.DirectionalLightHelper(dirLight, 5, '#00ff00')
 
 const pointLight = new THREE.PointLight(0x8437ff, 9, 0, 0.1)
-pointLight.position.set(-25, 50, 25)
+pointLight.position.set(-10, 80, 45)
 world.scene.add(ambientLight, dirLight, pointLight)
 
 /**
  * Shapes
  */
 
-const ring = new Ring({
+const ring = new Ring(world.camera, mouse, {
    coneRadius: 7,
    coneHeight: 20,
-   coneSegments: 25,
+   coneSegments: 100,
    count: 18,
    ringRadius: 50,
    shapeChunkOptions: {
@@ -54,6 +56,8 @@ const ring = new Ring({
       },
       innerOptions: {
          radius: 4,
+         metalness: 0.5,
+         roughness: 0.5,
          detail: 1,
          vary: 0.2,
       },
@@ -86,7 +90,7 @@ gui.addColor(params, 'clearColor').onChange((val: string) => {
    world.renderer.setClearColor(val)
 })
 
-// world.controls.enabled = false
+world.controls.enabled = false
 gui.add(world.controls, 'enabled')
    .name('controls')
    .onChange((val: boolean) => {
@@ -128,7 +132,7 @@ floorFolder.addColor(mirror, 'mirrorColor')
 
 floorFolder.close()
 
-const shapesFolder = gui.addFolder('Shapes')
+const shapesFolder = gui.addFolder('Shapes').close()
 
 shapesFolder.add(ring, 'shapeMetalness', 0, 1, 0.01)
 shapesFolder.add(ring, 'shapeRoughness', 0, 1, 0.01)
@@ -139,11 +143,11 @@ shapesFolder.add(ring, 'wonkyVary', 0, 5, 0.1)
 shapesFolder.add(ring, 'wonkyRadius', 0, 5, 0.1)
 shapesFolder.add(ring, 'coneRadius', 0, 50, 0.1)
 shapesFolder.add(ring, 'coneHeight', 0, 50, 0.1)
-shapesFolder.add(ring, 'coneSegments', 0, 50, 1)
+shapesFolder.add(ring, 'coneSegments', 0, 200, 1)
 shapesFolder.add(ring, 'ringRadius', 0, 100, 1)
 shapesFolder.add(ring, 'count', 0, 100, 1)
 
-const colorsFolder = gui.addFolder('Shape Colors')
+const colorsFolder = gui.addFolder('Shape Colors').close()
 for (let color of Object.keys(ring.colorOpts) as ['red', 'green', 'blue']) {
    for (let opt of Object.keys(ring.colorOpts[color]) as ['start', 'end', 'offset']) {
       colorsFolder
@@ -159,7 +163,7 @@ gui.close()
 
 let wheelDelta = 0
 window.addEventListener('wheel', (e) => {
-   console.log(e)
+   // console.log(e)
    if (Math.abs(e.deltaY) > Math.abs(wheelDelta)) {
       wheelDelta = e.deltaY
    }

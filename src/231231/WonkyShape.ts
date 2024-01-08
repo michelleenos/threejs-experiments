@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { noise2d, perlin3d, transformNoise3d, transformNoise2d } from './shadercode'
 
 export interface WonkyShapeOptions extends WonkyGeometryOptions, WonkyMaterialOptions {
    radius?: number
@@ -22,9 +23,7 @@ export class WonkyGeometry extends THREE.OctahedronGeometry {
    constructor({ detail = 1, vary = 2 }: WonkyGeometryOptions = {}) {
       super(1, detail)
       this._vary = vary
-
       this.initPositions = this.getAttribute('position').clone()
-
       this.setPositions()
    }
 
@@ -40,10 +39,8 @@ export class WonkyGeometry extends THREE.OctahedronGeometry {
    setPositions = () => {
       let count = this.initPositions.count
       let point = new THREE.Vector3()
-
       this.setAttribute('position', this.initPositions.clone())
       let currentPositions = this.getAttribute('position')
-
       let verticesMap: { [key: string]: { x: number; y: number; z: number } } = {}
 
       for (let i = 0; i < count; i++) {
@@ -70,13 +67,8 @@ export default class WonkyShape extends THREE.Mesh<WonkyGeometry, WonkyMaterial>
 
    constructor({ detail, radius = 5, color, metalness, roughness, vary }: WonkyShapeOptions = {}) {
       let geometry = new WonkyGeometry({ detail, vary })
-      let material = new WonkyMaterial({
-         color,
-         metalness,
-         roughness,
-      })
+      let material = new WonkyMaterial({ color, metalness, roughness })
       super(geometry, material)
-
       this._radius = radius
       this.scale.set(radius, radius, radius)
    }
@@ -97,10 +89,10 @@ export default class WonkyShape extends THREE.Mesh<WonkyGeometry, WonkyMaterial>
 
 export class WonkyMaterial extends THREE.MeshStandardMaterial {
    shader: THREE.Shader | undefined
+   noiseId: number = Math.random() * 100
 
    constructor({ color = '#fff', metalness = 0, roughness = 1 } = {}) {
       super({ color, metalness, roughness })
-
       this.onBeforeCompile = (shader) => {
          this.shader = shader
          this.updateShaderCode(shader)
@@ -109,28 +101,20 @@ export class WonkyMaterial extends THREE.MeshStandardMaterial {
 
    updateShaderCode = (shader: THREE.Shader) => {
       shader.uniforms.uTime = { value: 0 }
+      shader.uniforms.uNoiseId = { value: this.noiseId }
+      // https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
       shader.vertexShader = shader.vertexShader.replace(
          `#include <common>`,
          `#include <common>
          uniform float uTime;
-         float rand2(vec2 n) { 
-            return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
-         }       
-         float noiseadd ( in vec2 npos ){
-            const vec2 d = vec2(0.0, 1.0);
-            vec2 b = floor(npos);
-            vec2 f = smoothstep(vec2(0.0), vec2(1.0), fract(npos));
-            return mix(mix(rand2(b), rand2(b + d.yx), f.x), mix(rand2(b + d.xy), rand2(b + d.yy), f.x), f.y);
-         }`
+         uniform float uNoiseId;
+         ${perlin3d}`
       )
 
       shader.vertexShader = shader.vertexShader.replace(
          `#include <begin_vertex>`,
          `#include <begin_vertex>
-
-      transformed.x += noiseadd(vec2(uTime + transformed.y, transformed.x)) * 0.5 - 0.25;
-         transformed.y += noiseadd(vec2(uTime - transformed.x, transformed.z)) * 0.5 - 0.25;
-         transformed.z += noiseadd(vec2(uTime + transformed.z, transformed.y)) * 0.5 - 0.25;`
+         ${transformNoise3d}`
       )
    }
 
