@@ -9,6 +9,7 @@ export type ShapeChunkOptions = {
       color?: string
    }
    innerOptions?: WonkyShapeOptions
+   positionY?: number
 }
 
 export default class ShapeChunk extends THREE.Group {
@@ -20,6 +21,7 @@ export default class ShapeChunk extends THREE.Group {
       {
          outerOptions: { opacity = 0.5, metalness = 0.5, roughness = 0.5, color = '#fff' } = {},
          innerOptions = {},
+         positionY = -5,
       }: ShapeChunkOptions = {}
    ) {
       super()
@@ -37,7 +39,7 @@ export default class ShapeChunk extends THREE.Group {
       this.add(this.outer)
 
       this.inner = new WonkyShape(innerOptions)
-      this.inner.position.y = -5
+      this.inner.position.y = positionY
       this.add(this.inner)
    }
 

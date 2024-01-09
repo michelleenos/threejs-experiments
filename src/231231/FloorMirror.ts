@@ -63,6 +63,7 @@ export default class FloorMirror extends THREE.Group {
 
       this.position.copy(position)
       this.rotation.set(Math.PI * -0.5, 0, 0)
+
       this.floor.position.z = this._planeDist
    }
 
@@ -71,7 +72,6 @@ export default class FloorMirror extends THREE.Group {
    }
 
    set mirrorColor(color: string) {
-      console.log(color)
       this._mirrorColor = color
       this.mirror.dispose()
       this.remove(this.mirror)

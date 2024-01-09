@@ -1,5 +1,6 @@
 import * as THREE from 'three'
-import { noise2d, perlin3d, transformNoise3d, transformNoise2d } from './shadercode'
+import { perlin3d, transformNoise3d } from './shadercode'
+import Lerpable from './LerpableProp'
 
 export interface WonkyShapeOptions extends WonkyGeometryOptions, WonkyMaterialOptions {
    radius?: number
@@ -63,39 +64,53 @@ export class WonkyGeometry extends THREE.OctahedronGeometry {
 }
 
 export default class WonkyShape extends THREE.Mesh<WonkyGeometry, WonkyMaterial> {
-   _radius: number
+   scaleLerp: Lerpable<THREE.Vector3>
 
    constructor({ detail, radius = 5, color, metalness, roughness, vary }: WonkyShapeOptions = {}) {
       let geometry = new WonkyGeometry({ detail, vary })
       let material = new WonkyMaterial({ color, metalness, roughness })
       super(geometry, material)
-      this._radius = radius
       this.scale.set(radius, radius, radius)
+      this.scaleLerp = new Lerpable(this.scale)
+   }
+
+   lerpScale = (radius: number) => {
+      this.scaleLerp.set(new THREE.Vector3(radius, radius, radius))
    }
 
    set radius(radius: number) {
-      this._radius = radius
       this.scale.set(radius, radius, radius)
    }
 
    get radius() {
-      return this._radius
+      return this.scale.x
    }
 
    tick = (time: number) => {
       this.material.tick(time)
+      this.scaleLerp.tick()
    }
 }
 
 export class WonkyMaterial extends THREE.MeshStandardMaterial {
    shader: THREE.Shader | undefined
    noiseId: number = Math.random() * 100
+   _color: Lerpable<THREE.Color>
 
    constructor({ color = '#fff', metalness = 0, roughness = 1 } = {}) {
       super({ color, metalness, roughness })
+      this._color = new Lerpable(this.color)
       this.onBeforeCompile = (shader) => {
          this.shader = shader
          this.updateShaderCode(shader)
+      }
+   }
+
+   setColor(color: THREE.Color, instant = false) {
+      if (instant) {
+         this.color.copy(color)
+      } else {
+         this._color.set(color)
       }
    }
 
@@ -121,6 +136,7 @@ export class WonkyMaterial extends THREE.MeshStandardMaterial {
    tick = (time: number) => {
       if (this.shader) {
          this.shader.uniforms.uTime.value = time
+         this._color.tick()
       }
    }
 }

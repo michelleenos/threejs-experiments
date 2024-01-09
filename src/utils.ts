@@ -10,6 +10,14 @@ export const fract = (x: number) => {
    return x - Math.floor(x)
 }
 
+export const clamp = (x: number, min: number, max: number) => {
+   return Math.min(Math.max(x, min), max)
+}
+
+export const lerp = (x: number, y: number, a: number) => {
+   return x * (1 - a) + y * a
+}
+
 export const map = (
    value: number,
    start1: number,

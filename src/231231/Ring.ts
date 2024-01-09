@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import ShapeChunk, { ShapeChunkOptions } from './ShapeChunk'
-import { map } from '../utils'
+import { clamp, map } from '../utils'
 import { BufferGeometryUtils } from 'three/examples/jsm/Addons.js'
 import Mouse from '../utils/Mouse'
 
@@ -52,6 +52,9 @@ export default class Ring extends THREE.Group {
    mouse: Mouse
    raycaster = new THREE.Raycaster()
    intersecting: ShapeChunk | null = null
+   intersectingPoint: THREE.Vector3 | null = null
+   box: THREE.Box3
+   size: THREE.Vector3 = new THREE.Vector3()
    _coneRadius: number
    _coneHeight: number
    _coneSegments: number
@@ -115,7 +118,11 @@ export default class Ring extends THREE.Group {
       this._wonkyRadius = this.children[0].inner.radius
       this._wonkyVary = this.children[0].inner.geometry.vary
 
+      // window.addEventListener('click', () => this.onClick())
+
       this.setShapeProps()
+      this.box = new THREE.Box3().setFromObject(this)
+      this.box.getSize(this.size)
    }
 
    /**
@@ -163,25 +170,30 @@ export default class Ring extends THREE.Group {
    get innerRoughness() {
       return this._innerRoughness
    }
+   get wonkyPosY() {
+      return this.children[0].inner.position.y
+   }
 
    set wonkyRadius(value: number) {
       this._wonkyRadius = value
       this.needsUpdate.wonkiness = true
    }
-
    set wonkyVary(value: number) {
       this._wonkyVary = value
       this.needsUpdate.wonkiness = true
    }
-
    set innerMetalness(value: number) {
       this._innerMetalness = value
       this.needsUpdate.innerMaterial = true
    }
-
    set innerRoughness(value: number) {
       this._innerRoughness = value
       this.needsUpdate.innerMaterial = true
+   }
+   set wonkyPosY(value: number) {
+      this.children.forEach((item) => {
+         item.inner.position.y = value
+      })
    }
 
    /**
@@ -266,7 +278,8 @@ export default class Ring extends THREE.Group {
 
    getColorCoordAtIndex = (index: number, color: 'red' | 'green' | 'blue') => {
       const { offset, start, end } = this.colorOpts[color]
-      return map(Math.sin((index / this.count + offset) * Math.PI * 2), -1, 1, start, end)
+      let val = map(Math.sin((index / this.count + offset) * Math.PI * 2), -1, 1, start, end)
+      return clamp(val, 0, 1)
    }
 
    setShapeProps = () => {
@@ -281,8 +294,9 @@ export default class Ring extends THREE.Group {
       let green = this.getColorCoordAtIndex(index, 'green')
       let blue = this.getColorCoordAtIndex(index, 'blue')
 
+      this.children[index].userData.color = new THREE.Color(red, green, blue)
       this.children[index].outer.material.color = new THREE.Color(red, green, blue)
-      this.children[index].inner.material.color = new THREE.Color(red, green, blue)
+      this.children[index].inner.material.setColor(new THREE.Color(red, green, blue), true)
    }
 
    setShapePosition = (index: number) => {
@@ -309,43 +323,56 @@ export default class Ring extends THREE.Group {
       item.inner.geometry.vary = this._wonkyVary
    }
 
-   checkIntersects = () => {
+   findIntersecting = () => {
       this.raycaster.setFromCamera(this.mouse.pos, this.camera)
       const intersects = this.raycaster.intersectObjects(this.children)
 
       if (intersects.length > 0) {
+         this.intersectingPoint = intersects[0].point
          let obj = intersects[0].object
          let parent = obj.parent
          if (parent instanceof ShapeChunk) {
-            if (parent === this.intersecting) return
-            // parent.inner.material.color.set('#ffffff')
-            this.resetIntersecting()
-            this.setIntersecting(parent)
-         } else {
-            this.resetIntersecting()
+            return parent
          }
       }
    }
 
+   checkIntersects = () => {
+      let obj = this.findIntersecting()
+
+      if (obj) {
+         if (obj === this.intersecting) return
+         this.resetIntersecting()
+         this.setIntersecting(obj)
+      } else {
+         this.resetIntersecting()
+      }
+   }
+
    setIntersecting = (object: ShapeChunk) => {
-      let currentColor = object.inner.material.color.clone()
-      object.userData.color = currentColor
-      object.inner.material.color.set('#ffffff')
+      object.inner.material.setColor(new THREE.Color('#ffffff'))
+      object.inner.lerpScale(this._wonkyRadius * 1.25)
       this.intersecting = object
    }
 
    resetIntersecting = () => {
       if (!this.intersecting) return
+
       let colorToSet = this.intersecting.userData.color
       if (colorToSet instanceof THREE.Color) {
-         let hex = colorToSet.getHexString()
-         this.intersecting.inner.material.color.set(`#${hex}`)
-      } else {
-         this.needsUpdate.colors = true
+         this.intersecting.inner.material.setColor(colorToSet)
       }
-
+      this.intersecting.inner.lerpScale(this._wonkyRadius)
       this.intersecting = null
+      // this.intersectingPoint = null
    }
+
+   // onClick = () => {
+   //    let obj = this.findIntersecting()
+   //    if (obj) {
+   //       console.log(obj.inner.material.color, obj.inner.material._color)
+   //    }
+   // }
 
    tick = (time: number) => {
       this.checkIntersects()
