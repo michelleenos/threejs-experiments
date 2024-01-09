@@ -1,8 +1,7 @@
 import * as THREE from 'three'
-import ShapeChunk, { ShapeChunkOptions } from './ShapeChunk'
 import { clamp, map } from '../utils'
-import { BufferGeometryUtils } from 'three/examples/jsm/Addons.js'
 import Mouse from '../utils/Mouse'
+import WonkyShape, { WonkyShapeOptions } from './WonkyShape'
 
 export type ColorCoordOpt = {
    start: number
@@ -21,8 +20,13 @@ export type RingOptions = {
    coneHeight?: number
    coneSegments?: number
    ringRadius?: number
+   metalness?: number
+   roughness?: number
+   outerOpacity?: number
    count?: number
-   shapeChunkOptions?: ShapeChunkOptions
+   innerPosY?: number
+   posY?: number
+   wonkyShapeOptions?: WonkyShapeOptions
    colorOpts?: ColorCoordOpts
 }
 
@@ -45,84 +49,107 @@ const defaultColorCoordOpts: ColorCoordOpts = {
 }
 
 export default class Ring extends THREE.Group {
-   children: ShapeChunk[] = []
    outerGeometry: THREE.BufferGeometry
+   outerMaterial: THREE.MeshStandardMaterial
+   outerInstance: THREE.InstancedMesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>
+   wonkyShapes: WonkyShape[] = []
    colorOpts: ColorCoordOpts
    camera: THREE.Camera
    mouse: Mouse
    raycaster = new THREE.Raycaster()
-   intersecting: ShapeChunk | null = null
-   intersectingPoint: THREE.Vector3 | null = null
-   box: THREE.Box3
-   size: THREE.Vector3 = new THREE.Vector3()
+   intersecting: number | null = null
    _coneRadius: number
    _coneHeight: number
    _coneSegments: number
    _ringRadius: number
-   _shapeOpacity: number
-   _shapeMetalness: number
-   _shapeRoughness: number
-   _innerMetalness: number
-   _innerRoughness: number
    _wonkyRadius: number
    _wonkyVary: number
+   _wonkyMetalness: number
+   _wonkyRoughness: number
+   _innerPosY: number
 
    needsUpdate = {
       innerMaterial: false,
-      wonkiness: false,
-      outerMaterial: false,
-      positions: false,
-      colors: false,
+      innerPos: false,
    }
 
    constructor(
       camera: THREE.Camera,
       mouse: Mouse,
       {
-         coneRadius = 7,
-         coneHeight = 20,
-         coneSegments = 25,
+         innerPosY = 6,
+         posY = 1,
+         outerOpacity = 0.5,
+         metalness = 0.5,
+         roughness = 0.5,
+         coneRadius = 7.6,
+         coneHeight = 22,
+         coneSegments = 100,
          ringRadius = 50,
-         count = 10,
+         count = 14,
          colorOpts = defaultColorCoordOpts,
-         shapeChunkOptions = {},
+         wonkyShapeOptions = {},
       }: RingOptions = {}
    ) {
       super()
       this.mouse = mouse
       this.camera = camera
+      this.colorOpts = colorOpts
       this._ringRadius = ringRadius
       this._coneRadius = coneRadius
       this._coneHeight = coneHeight
       this._coneSegments = coneSegments
+      this._innerPosY = innerPosY
+
+      this.position.y = posY
+
       this.outerGeometry = new THREE.ConeGeometry(
          this._coneRadius,
          this._coneHeight,
          this._coneSegments
       )
-      this.outerGeometry = BufferGeometryUtils.mergeVertices(this.outerGeometry, 0.1)
-      this.outerGeometry.computeVertexNormals()
       this.outerGeometry.attributes.position.needsUpdate = true
-      this.colorOpts = colorOpts
+      this.outerMaterial = new THREE.MeshStandardMaterial({
+         color: '#fff',
+         opacity: outerOpacity,
+         metalness,
+         roughness,
+         transparent: true,
+      })
+      this.outerInstance = new THREE.InstancedMesh(this.outerGeometry, this.outerMaterial, count)
+      this.outerInstance.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
+      this.outerInstance.position.set(0, 0, 0)
+      this.add(this.outerInstance)
 
-      for (let i = 0; i < count; i++) {
-         let shapeChunk = new ShapeChunk(this.outerGeometry, shapeChunkOptions)
-         this.add(shapeChunk)
+      this._wonkyRadius = wonkyShapeOptions.radius ?? 4
+      this._wonkyVary = wonkyShapeOptions.vary ?? 0.2
+      this._wonkyMetalness = wonkyShapeOptions.metalness ?? 0.5
+      this._wonkyRoughness = wonkyShapeOptions.roughness ?? 0.5
+      this.rebuild()
+   }
+
+   rebuild = () => {
+      this.wonkyShapes.forEach((item) => {
+         item.material.dispose()
+         item.geometry.dispose()
+         this.remove(item)
+      })
+      this.wonkyShapes = []
+
+      let opts = {
+         radius: this._wonkyRadius,
+         vary: this._wonkyVary,
+         metalness: this._wonkyMetalness,
+         roughness: this._wonkyRoughness,
       }
 
-      this._shapeOpacity = this.children[0].outer.material.opacity
-      this._shapeMetalness = this.children[0].outer.material.metalness
-      this._shapeRoughness = this.children[0].outer.material.roughness
-      this._innerMetalness = this.children[0].inner.material.metalness
-      this._innerRoughness = this.children[0].inner.material.roughness
-      this._wonkyRadius = this.children[0].inner.radius
-      this._wonkyVary = this.children[0].inner.geometry.vary
+      for (let i = 0; i < this.count; i++) {
+         let wonkyShape = new WonkyShape(opts)
+         this.wonkyShapes.push(wonkyShape)
+         this.add(wonkyShape)
+      }
 
-      // window.addEventListener('click', () => this.onClick())
-
-      this.setShapeProps()
-      this.box = new THREE.Box3().setFromObject(this)
-      this.box.getSize(this.size)
+      this.setShapes()
    }
 
    /**
@@ -131,14 +158,12 @@ export default class Ring extends THREE.Group {
    get coneRadius() {
       return this._coneRadius
    }
-
    get coneHeight() {
       return this._coneHeight
    }
    get coneSegments() {
       return this._coneSegments
    }
-
    set coneRadius(value: number) {
       this._coneRadius = value
       this.resetOuterGeometry()
@@ -164,94 +189,61 @@ export default class Ring extends THREE.Group {
    get wonkyVary() {
       return this._wonkyVary
    }
-   get innerMetalness() {
-      return this._innerMetalness
+   get wonkyMetalness() {
+      return this._wonkyMetalness
    }
-   get innerRoughness() {
-      return this._innerRoughness
+   get wonkyRoughness() {
+      return this._wonkyRoughness
    }
-   get wonkyPosY() {
-      return this.children[0].inner.position.y
+   get innerPosY() {
+      return this._innerPosY
    }
 
    set wonkyRadius(value: number) {
       this._wonkyRadius = value
-      this.needsUpdate.wonkiness = true
+      // this.rebuild()
+      this.wonkyShapes.forEach((shape) => {
+         shape.radius = value
+      })
    }
    set wonkyVary(value: number) {
       this._wonkyVary = value
-      this.needsUpdate.wonkiness = true
+      this.rebuild()
    }
-   set innerMetalness(value: number) {
-      this._innerMetalness = value
+   set wonkyMetalness(value: number) {
+      this._wonkyMetalness = value
       this.needsUpdate.innerMaterial = true
    }
-   set innerRoughness(value: number) {
-      this._innerRoughness = value
+   set wonkyRoughness(value: number) {
+      this._wonkyRoughness = value
       this.needsUpdate.innerMaterial = true
    }
-   set wonkyPosY(value: number) {
-      this.children.forEach((item) => {
-         item.inner.position.y = value
-      })
-   }
-
-   /**
-    * SHAPES OUTER
-    */
-
-   get shapeOpacity() {
-      return this._shapeOpacity
-   }
-   get shapeMetalness() {
-      return this._shapeMetalness
-   }
-   get shapeRoughness() {
-      return this._shapeRoughness
-   }
-
-   set shapeOpacity(value: number) {
-      this._shapeOpacity = value
-      this.needsUpdate.outerMaterial = true
-   }
-   set shapeMetalness(value: number) {
-      this._shapeMetalness = value
-      this.needsUpdate.outerMaterial = true
-   }
-   set shapeRoughness(value: number) {
-      this._shapeRoughness = value
-      this.needsUpdate.outerMaterial = true
+   set innerPosY(value: number) {
+      this._innerPosY = value
+      this.needsUpdate.innerPos = true
    }
 
    /**
     * RING
     */
-
    get count() {
-      return this.children.length
+      return this.outerInstance.count
    }
    get ringRadius() {
       return this._ringRadius
    }
-
    set ringRadius(value: number) {
       this._ringRadius = value
-      this.needsUpdate.positions = true
+      this.setShapes()
    }
    set count(value: number) {
-      if (value > this.count) {
-         for (let i = this.count; i < value; i++) {
-            let shapeChunk = new ShapeChunk(this.outerGeometry)
-            this.add(shapeChunk)
-         }
-      } else if (value < this.count) {
-         for (let i = this.count; i > value; i--) {
-            this.children[i - 1].dispose()
-            this.remove(this.children[i - 1])
-         }
-      }
-      this.needsUpdate.positions = true
-      this.needsUpdate.colors = true
+      this.remove(this.outerInstance)
+      this.outerInstance.dispose()
+      this.outerInstance = new THREE.InstancedMesh(this.outerGeometry, this.outerMaterial, value)
+      this.outerInstance.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
+      this.outerInstance.position.set(0, 0, 0)
+      this.add(this.outerInstance)
+      this.rebuild()
    }
 
    /**
@@ -260,20 +252,19 @@ export default class Ring extends THREE.Group {
 
    updateColorOpt = (color: keyof ColorCoordOpts, opt: keyof ColorCoordOpt, value: number) => {
       this.colorOpts[color][opt] = value
-      this.needsUpdate.colors = true
+      this.setShapes()
    }
 
    resetOuterGeometry = () => {
-      this.outerGeometry.dispose()
+      let oldGeometry = this.outerGeometry
       this.outerGeometry = new THREE.ConeGeometry(
          this._coneRadius,
          this._coneHeight,
          this._coneSegments
       )
 
-      this.children.forEach((item) => {
-         item.outer.geometry = this.outerGeometry
-      })
+      this.outerInstance.geometry = this.outerGeometry
+      oldGeometry.dispose()
    }
 
    getColorCoordAtIndex = (index: number, color: 'red' | 'green' | 'blue') => {
@@ -282,114 +273,101 @@ export default class Ring extends THREE.Group {
       return clamp(val, 0, 1)
    }
 
-   setShapeProps = () => {
-      this.children.forEach((shapeChunk, i) => {
-         this.setShapeColor(i)
-         this.setShapePosition(i)
-      })
+   setShapes = () => {
+      const matrix = new THREE.Matrix4()
+      const quaternion = new THREE.Quaternion()
+      quaternion.setFromEuler(new THREE.Euler(Math.PI, 0, 0))
+
+      for (let i = 0; i < this.count; i++) {
+         const angle = (i / this.count) * Math.PI * 2
+         const position = new THREE.Vector3(
+            Math.cos(angle) * this._ringRadius,
+            0,
+            Math.sin(angle) * this._ringRadius
+         )
+
+         matrix.makeRotationFromQuaternion(quaternion)
+         matrix.setPosition(position)
+         this.outerInstance.setMatrixAt(i, matrix)
+         position.y += this._innerPosY
+         this.wonkyShapes[i].position.copy(position)
+
+         let color = new THREE.Color(
+            this.getColorCoordAtIndex(i, 'red'),
+            this.getColorCoordAtIndex(i, 'green'),
+            this.getColorCoordAtIndex(i, 'blue')
+         )
+         this.outerInstance.setColorAt(i, color)
+         this.wonkyShapes[i].material.userData.color = color
+         this.wonkyShapes[i].material.color.set(color)
+      }
+
+      this.outerInstance.instanceMatrix.needsUpdate = true
+      this.outerInstance.instanceColor && (this.outerInstance.instanceColor.needsUpdate = true)
    }
 
-   setShapeColor = (index: number) => {
-      let red = this.getColorCoordAtIndex(index, 'red')
-      let green = this.getColorCoordAtIndex(index, 'green')
-      let blue = this.getColorCoordAtIndex(index, 'blue')
-
-      this.children[index].userData.color = new THREE.Color(red, green, blue)
-      this.children[index].outer.material.color = new THREE.Color(red, green, blue)
-      this.children[index].inner.material.setColor(new THREE.Color(red, green, blue), true)
-   }
-
-   setShapePosition = (index: number) => {
-      const angle = (index / this.count) * Math.PI * 2
-      this.children[index].position.x = Math.cos(angle) * this._ringRadius
-      this.children[index].position.z = Math.sin(angle) * this._ringRadius
-      this.children[index].lookAt(0, 0, 0)
-      this.children[index].rotateX(Math.PI)
-   }
-
-   updateInnerMaterial = (item: ShapeChunk) => {
-      item.inner.material.metalness = this._innerMetalness
-      item.inner.material.roughness = this._innerRoughness
-   }
-
-   updateOuterMaterial = (item: ShapeChunk) => {
-      item.outer.material.opacity = this._shapeOpacity
-      item.outer.material.metalness = this._shapeMetalness
-      item.outer.material.roughness = this._shapeRoughness
-   }
-
-   updateWonkiness = (item: ShapeChunk) => {
-      item.inner.radius = this._wonkyRadius
-      item.inner.geometry.vary = this._wonkyVary
-   }
-
-   findIntersecting = () => {
+   findIntersectedIndex = () => {
       this.raycaster.setFromCamera(this.mouse.pos, this.camera)
       const intersects = this.raycaster.intersectObjects(this.children)
+      let intersected = intersects.find((item) => item.object === this.outerInstance)
 
-      if (intersects.length > 0) {
-         this.intersectingPoint = intersects[0].point
-         let obj = intersects[0].object
-         let parent = obj.parent
-         if (parent instanceof ShapeChunk) {
-            return parent
-         }
+      if (intersected) {
+         let index = intersected.instanceId
+         return index
       }
    }
 
    checkIntersects = () => {
-      let obj = this.findIntersecting()
-
-      if (obj) {
-         if (obj === this.intersecting) return
+      let index = this.findIntersectedIndex()
+      if (index || index === 0) {
+         if (index === this.intersecting) return
          this.resetIntersecting()
-         this.setIntersecting(obj)
+         this.setIntersecting(index)
       } else {
          this.resetIntersecting()
       }
    }
 
-   setIntersecting = (object: ShapeChunk) => {
-      object.inner.material.setColor(new THREE.Color('#ffffff'))
-      object.inner.lerpScale(this._wonkyRadius * 1.25)
-      this.intersecting = object
+   setIntersecting = (index: number) => {
+      this.wonkyShapes[index].material.setColor(new THREE.Color('#ffffff'))
+      this.wonkyShapes[index].lerpScale(this._wonkyRadius * 1.25)
+      this.intersecting = index
    }
 
    resetIntersecting = () => {
-      if (!this.intersecting) return
+      if (!this.intersecting && this.intersecting !== 0) return
 
-      let colorToSet = this.intersecting.userData.color
-      if (colorToSet instanceof THREE.Color) {
-         this.intersecting.inner.material.setColor(colorToSet)
-      }
-      this.intersecting.inner.lerpScale(this._wonkyRadius)
+      let shape = this.wonkyShapes[this.intersecting]
+      let colorToSet = new THREE.Color(
+         this.getColorCoordAtIndex(this.intersecting, 'red'),
+         this.getColorCoordAtIndex(this.intersecting, 'green'),
+         this.getColorCoordAtIndex(this.intersecting, 'blue')
+      )
+
+      shape.material.setColor(colorToSet)
+
+      shape.lerpScale(this._wonkyRadius)
       this.intersecting = null
-      // this.intersectingPoint = null
    }
-
-   // onClick = () => {
-   //    let obj = this.findIntersecting()
-   //    if (obj) {
-   //       console.log(obj.inner.material.color, obj.inner.material._color)
-   //    }
-   // }
 
    tick = (time: number) => {
       this.checkIntersects()
-      this.children.forEach((item, i) => {
-         item.inner.tick(time)
 
-         if (this.needsUpdate.innerMaterial) this.updateInnerMaterial(item)
-         if (this.needsUpdate.outerMaterial) this.updateOuterMaterial(item)
-         if (this.needsUpdate.wonkiness) this.updateWonkiness(item)
-         if (this.needsUpdate.positions) this.setShapePosition(i)
-         if (this.needsUpdate.colors) this.setShapeColor(i)
-      })
+      for (let i = 0; i < this.count; i++) {
+         let shape = this.wonkyShapes[i]
+
+         if (this.needsUpdate.innerMaterial) {
+            shape.material.metalness = this._wonkyMetalness
+            shape.material.roughness = this._wonkyRoughness
+         }
+
+         if (this.needsUpdate.innerPos) {
+            shape.position.y = this._innerPosY
+         }
+         shape.tick(time)
+      }
 
       this.needsUpdate.innerMaterial = false
-      this.needsUpdate.outerMaterial = false
-      this.needsUpdate.wonkiness = false
-      this.needsUpdate.positions = false
-      this.needsUpdate.colors = false
+      this.needsUpdate.innerPos = false
    }
 }

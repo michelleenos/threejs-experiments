@@ -3,13 +3,12 @@ import { Reflector } from 'three/examples/jsm/Addons.js'
 import Sizes from '../utils/Sizes'
 
 export type MirrorOpts = {
-   sizes: Sizes
    size?: THREE.Vector2
    mirrorColor?: string
-   floorColor?: string
-   floorOpacity?: number
-   floorMetalness?: number
-   floorRoughness?: number
+   screenColor?: string
+   screenOpacity?: number
+   screenMetalness?: number
+   screenRoughness?: number
    clipBias?: number
    planeDist?: number
    position?: THREE.Vector3
@@ -24,17 +23,19 @@ export default class FloorMirror extends THREE.Group {
    _size: THREE.Vector2
    _mirrorColor: string
 
-   constructor({
-      sizes,
-      size = new THREE.Vector2(100, 100),
-      mirrorColor = '#ffffff',
-      floorColor = '#ffffff',
-      floorOpacity = 0.2,
-      floorMetalness = 1,
-      floorRoughness = 0.6,
-      planeDist = 0.1,
-      position = new THREE.Vector3(),
-   }: MirrorOpts) {
+   constructor(
+      sizes: Sizes,
+      {
+         size = new THREE.Vector2(100, 100),
+         mirrorColor = '#66ffff',
+         screenColor = '#bf94ff',
+         screenOpacity = 0.2,
+         screenMetalness = 1,
+         screenRoughness = 0.6,
+         planeDist = 0.1,
+         position = new THREE.Vector3(-25, -10, -25),
+      }: MirrorOpts
+   ) {
       super()
 
       this.windowSizes = sizes
@@ -46,11 +47,11 @@ export default class FloorMirror extends THREE.Group {
       this.floor = new THREE.Mesh(
          this.geometry,
          new THREE.MeshStandardMaterial({
-            roughness: floorRoughness,
-            metalness: floorMetalness,
+            roughness: screenRoughness,
+            metalness: screenMetalness,
             transparent: true,
-            opacity: floorOpacity,
-            color: floorColor,
+            opacity: screenOpacity,
+            color: screenColor,
          })
       )
       this.mirror = new Reflector(this.geometry, {
@@ -65,6 +66,17 @@ export default class FloorMirror extends THREE.Group {
       this.rotation.set(Math.PI * -0.5, 0, 0)
 
       this.floor.position.z = this._planeDist
+
+      this.windowSizes.on('resize', this.onWindowResize)
+   }
+
+   onWindowResize = () => {
+      this.mirror
+         .getRenderTarget()
+         .setSize(
+            this.windowSizes.width * this.windowSizes.pixelRatio,
+            this.windowSizes.height * this.windowSizes.pixelRatio
+         )
    }
 
    get mirrorColor() {

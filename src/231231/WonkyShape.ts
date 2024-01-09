@@ -21,7 +21,7 @@ export class WonkyGeometry extends THREE.OctahedronGeometry {
    _vary: number
    initPositions: THREE.BufferAttribute
 
-   constructor({ detail = 1, vary = 2 }: WonkyGeometryOptions = {}) {
+   constructor({ detail = 1, vary = 0.2 }: WonkyGeometryOptions = {}) {
       super(1, detail)
       this._vary = vary
       this.initPositions = this.getAttribute('position').clone()
@@ -66,7 +66,14 @@ export class WonkyGeometry extends THREE.OctahedronGeometry {
 export default class WonkyShape extends THREE.Mesh<WonkyGeometry, WonkyMaterial> {
    scaleLerp: Lerpable<THREE.Vector3>
 
-   constructor({ detail, radius = 5, color, metalness, roughness, vary }: WonkyShapeOptions = {}) {
+   constructor({
+      detail = 1,
+      radius = 4,
+      color,
+      metalness,
+      roughness,
+      vary = 0.2,
+   }: WonkyShapeOptions = {}) {
       let geometry = new WonkyGeometry({ detail, vary })
       let material = new WonkyMaterial({ color, metalness, roughness })
       super(geometry, material)
@@ -97,7 +104,7 @@ export class WonkyMaterial extends THREE.MeshStandardMaterial {
    noiseId: number = Math.random() * 100
    _color: Lerpable<THREE.Color>
 
-   constructor({ color = '#fff', metalness = 0, roughness = 1 } = {}) {
+   constructor({ color = '#fff', metalness = 0.5, roughness = 0.5 } = {}) {
       super({ color, metalness, roughness })
       this._color = new Lerpable(this.color)
       this.onBeforeCompile = (shader) => {

@@ -14,6 +14,7 @@ export default class World {
    constructor(sizes: Sizes) {
       this.sizes = sizes
       this.renderer = new THREE.WebGLRenderer({ antialias: true })
+      this.renderer.outputColorSpace = THREE.SRGBColorSpace
       this.renderer.setClearColor('#000')
       document.body.appendChild(this.renderer.domElement)
 
