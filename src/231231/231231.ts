@@ -60,26 +60,45 @@ const lightParamsDefaults = {
 
 export default class Experience {
    stats: Stats
-   gui: GUI
+   gui!: GUI
    world: World
    sizes: Sizes
    timer: Timer
    mouse: Mouse
-   lights: {
+   lights!: {
       ambient: THREE.AmbientLight
       directional: THREE.DirectionalLight
       point: THREE.PointLight
+      dirHelper: THREE.DirectionalLightHelper
+      pointHelper: THREE.PointLightHelper
    }
-   ring: Ring
-   mirror: FloorMirror
+   ring!: Ring
+   mirror!: FloorMirror
    maxAcceleration: number = 0.08
    velMult: number = 0.98
    cameraPosDefault = new THREE.Vector3(0, 40, 100)
+   mirrorX: { min: number; max: number } = { min: -30, max: 30 }
+   mirrorZ: { min: number; max: number } = { min: -10, max: 10 }
 
    wheelVelocity = 0
    wheelAcceleration = 0
 
-   constructor({
+   constructor(params: ExpParams = {}) {
+      this.stats = new Stats()
+      document.body.appendChild(this.stats.dom)
+      this.sizes = new Sizes()
+      this.mouse = new Mouse(this.sizes)
+      this.timer = new Timer()
+
+      this.world = new World(this.sizes)
+      this.setFromParams(params)
+
+      this.timer.on('tick', this.tick)
+
+      window.addEventListener('wheel', this.onWheel)
+   }
+
+   setFromParams = ({
       clearColor = '#0c0911',
       maxAcceleration,
       velMult,
@@ -87,41 +106,27 @@ export default class Experience {
       ringOptions = {},
       mirrorOptions = {},
       lightOptions = {},
-   }: ExpParams = {}) {
+   }: ExpParams) => {
       if (maxAcceleration) this.maxAcceleration = maxAcceleration
       if (velMult) this.velMult = velMult
       if (cameraPosDefault) this.cameraPosDefault = cameraPosDefault
 
-      this.stats = new Stats()
-      document.body.appendChild(this.stats.dom)
-      this.sizes = new Sizes()
-      this.mouse = new Mouse(this.sizes)
-      this.timer = new Timer()
-      this.gui = new GUI()
-
-      this.world = new World(this.sizes)
-      this.world.camera.position.copy(this.cameraPosDefault)
       this.world.renderer.setClearColor(clearColor)
-      this.world.camera.far = 200
-      this.world.camera.updateProjectionMatrix()
-      this.world.controls.maxPolarAngle = Math.PI * 0.5
-      this.world.controls.minPolarAngle = Math.PI * 0
-      this.world.controls.enableZoom = false
-      this.world.controls.enabled = false
-
+      this.setCameraAndControls()
       this.ring = new Ring(this.world.camera, this.mouse, ringOptions)
       this.mirror = new FloorMirror(this.sizes, mirrorOptions)
 
-      let ambiLightOpts = { ...lightOptions.ambient, ...lightParamsDefaults.ambient }
+      let ambiLightOpts = { ...lightParamsDefaults.ambient, ...lightOptions.ambient }
       let ambient = new THREE.AmbientLight(ambiLightOpts.color, ambiLightOpts.intensity)
       ambient.visible = ambiLightOpts.visible ?? false
 
-      let dirLightOpts = { ...lightOptions.directional, ...lightParamsDefaults.directional }
+      let dirLightOpts = { ...lightParamsDefaults.directional, ...lightOptions.directional }
       let directional = new THREE.DirectionalLight(dirLightOpts.color, dirLightOpts.intensity)
       directional.position.copy(dirLightOpts.position)
       directional.visible = dirLightOpts.visible ?? false
+      let dirHelper = new THREE.DirectionalLightHelper(directional, 5)
 
-      let pointOpts = { ...lightOptions.point, ...lightParamsDefaults.point }
+      let pointOpts = { ...lightParamsDefaults.point, ...lightOptions.point }
       let point = new THREE.PointLight(
          pointOpts.color,
          pointOpts.intensity,
@@ -130,15 +135,30 @@ export default class Experience {
       )
       point.position.copy(pointOpts.position)
       point.visible = pointOpts.visible ?? false
+      let pointHelper = new THREE.PointLightHelper(point, 5)
 
-      this.lights = { ambient, directional, point }
-
-      this.world.scene.add(this.ring, this.mirror, ambient, directional, point)
+      this.lights = { ambient, directional, point, dirHelper, pointHelper }
+      this.world.scene.add(
+         this.ring,
+         this.mirror,
+         ambient,
+         directional,
+         point,
+         dirHelper,
+         pointHelper
+      )
 
       this.setupGui()
-      this.timer.on('tick', this.tick)
+   }
 
-      window.addEventListener('wheel', this.onWheel)
+   setCameraAndControls = () => {
+      this.world.camera.position.copy(this.cameraPosDefault)
+      this.world.camera.far = 200
+      this.world.camera.updateProjectionMatrix()
+      this.world.controls.maxPolarAngle = Math.PI * 0.5
+      this.world.controls.minPolarAngle = Math.PI * 0
+      this.world.controls.enableZoom = false
+      this.world.controls.enabled = false
    }
 
    onWheel = (e: WheelEvent) => {
@@ -146,7 +166,18 @@ export default class Experience {
    }
 
    setupGui = () => {
+      this.gui = new GUI()
       getGui(this)
+   }
+
+   // get clearColor() {
+   //    let clearColor = new THREE.Color()
+   //    this.world.renderer.getClearColor(clearColor)
+   //    return clearColor.getHexString()
+   // }
+
+   set clearColor(color: string) {
+      this.world.renderer.setClearColor(color)
    }
 
    tick = () => {
@@ -154,10 +185,10 @@ export default class Experience {
 
       this.ring.tick(time)
 
-      let mirrorX = map(this.mouse.pos.x, -1, 1, -30, 30)
-      let mirrorY = map(this.mouse.pos.y, -1, 1, 10, -10)
+      let mirrorX = map(this.mouse.pos.x, -1, 1, this.mirrorX.min, this.mirrorX.max)
+      let mirrorZ = map(this.mouse.pos.y, -1, 1, this.mirrorZ.max, this.mirrorZ.min)
       this.mirror.position.x = lerp(this.mirror.position.x, mirrorX, 0.02)
-      this.mirror.position.z = lerp(this.mirror.position.z, mirrorY, 0.02)
+      this.mirror.position.z = lerp(this.mirror.position.z, mirrorZ, 0.02)
 
       this.wheelVelocity += this.wheelAcceleration
       this.wheelVelocity = clamp(this.wheelVelocity, -this.maxAcceleration, this.maxAcceleration)
@@ -167,6 +198,26 @@ export default class Experience {
 
       this.world.render()
       this.stats.update()
+   }
+
+   dispose = () => {
+      this.world.scene.remove(
+         this.ring,
+         this.mirror,
+         this.lights.ambient,
+         this.lights.directional,
+         this.lights.point,
+         this.lights.dirHelper,
+         this.lights.pointHelper
+      )
+      this.ring.dispose()
+      this.mirror.dispose()
+      this.lights.ambient.dispose()
+      this.lights.directional.dispose()
+      this.lights.dirHelper.dispose()
+      this.lights.point.dispose()
+      this.lights.pointHelper.dispose()
+      this.gui.destroy()
    }
 }
 

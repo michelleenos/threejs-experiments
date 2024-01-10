@@ -9,8 +9,6 @@ export default class World {
    sizes: Sizes
    controls: OrbitControls
 
-   mouse: THREE.Vector2 = new THREE.Vector2()
-
    constructor(sizes: Sizes) {
       this.sizes = sizes
       this.renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -25,11 +23,6 @@ export default class World {
 
       this.onResize()
       this.sizes.on('resize', this.onResize)
-   }
-
-   onMouseMove = (e: MouseEvent) => {
-      this.mouse.x = (e.clientX / this.sizes.width) * 2 - 1
-      this.mouse.y = -(e.clientY / this.sizes.height) * 2 + 1
    }
 
    onResize = () => {

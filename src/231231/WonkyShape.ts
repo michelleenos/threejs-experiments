@@ -2,29 +2,51 @@ import * as THREE from 'three'
 import { perlin3d, transformNoise3d } from './shadercode'
 import Lerpable from './LerpableProp'
 
-export interface WonkyShapeOptions extends WonkyGeometryOptions, WonkyMaterialOptions {
+export interface WonkyShapeOptions {
    radius?: number
-}
-
-export type WonkyMaterialOptions = {
    color?: string
    metalness?: number
    roughness?: number
-}
-
-export type WonkyGeometryOptions = {
-   detail?: number
+   noiseAmount?: number
+   noiseSpeed?: number
    vary?: number
 }
 
-export class WonkyGeometry extends THREE.OctahedronGeometry {
+export default class WonkyShape extends THREE.Mesh<
+   THREE.OctahedronGeometry,
+   THREE.MeshStandardMaterial
+> {
+   _scale: Lerpable<THREE.Vector3>
+   _color: Lerpable<THREE.Color>
    _vary: number
+   noiseId: number = Math.random() * 100
+   shader: THREE.Shader | undefined
    initPositions: THREE.BufferAttribute
 
-   constructor({ detail = 1, vary = 0.2 }: WonkyGeometryOptions = {}) {
-      super(1, detail)
+   constructor({
+      radius = 4,
+      color = '#fff',
+      metalness = 0.5,
+      roughness = 0.5,
+      vary = 0.1,
+      noiseSpeed = 0.001,
+      noiseAmount = 0.3,
+   }: WonkyShapeOptions = {}) {
+      let geometry = new THREE.OctahedronGeometry(1, 1)
+      let material = new THREE.MeshStandardMaterial({ color, metalness, roughness })
+
+      material.onBeforeCompile = (shader) => {
+         this.shader = shader
+         this.updateShaderCode(shader, noiseSpeed, noiseAmount)
+      }
+      super(geometry, material)
+
       this._vary = vary
-      this.initPositions = this.getAttribute('position').clone()
+      this.scale.set(radius, radius, radius)
+      this._color = new Lerpable(this.material.color)
+      this._scale = new Lerpable(this.scale)
+
+      this.initPositions = this.geometry.getAttribute('position').clone()
       this.setPositions()
    }
 
@@ -37,11 +59,27 @@ export class WonkyGeometry extends THREE.OctahedronGeometry {
       return this._vary
    }
 
+   set noiseAmount(noiseAmount: number) {
+      if (this.shader) this.shader.uniforms.uNoiseAmount.value = noiseAmount
+   }
+
+   set noiseSpeed(noiseSpeed: number) {
+      if (this.shader) this.shader.uniforms.uSpeed.value = noiseSpeed
+   }
+
+   setScale(scale: number) {
+      this._scale.set(new THREE.Vector3(scale, scale, scale))
+   }
+
+   setColor(color: THREE.Color, instant = false) {
+      instant ? this.material.color.copy(color) : this._color.set(color)
+   }
+
    setPositions = () => {
       let count = this.initPositions.count
       let point = new THREE.Vector3()
-      this.setAttribute('position', this.initPositions.clone())
-      let currentPositions = this.getAttribute('position')
+      this.geometry.setAttribute('position', this.initPositions.clone())
+      let currentPositions = this.geometry.getAttribute('position')
       let verticesMap: { [key: string]: { x: number; y: number; z: number } } = {}
 
       for (let i = 0; i < count; i++) {
@@ -59,77 +97,22 @@ export class WonkyGeometry extends THREE.OctahedronGeometry {
          currentPositions.setXYZ(i, x, y, z)
       }
 
-      this.computeVertexNormals()
-   }
-}
-
-export default class WonkyShape extends THREE.Mesh<WonkyGeometry, WonkyMaterial> {
-   scaleLerp: Lerpable<THREE.Vector3>
-
-   constructor({
-      detail = 1,
-      radius = 4,
-      color,
-      metalness,
-      roughness,
-      vary = 0.2,
-   }: WonkyShapeOptions = {}) {
-      let geometry = new WonkyGeometry({ detail, vary })
-      let material = new WonkyMaterial({ color, metalness, roughness })
-      super(geometry, material)
-      this.scale.set(radius, radius, radius)
-      this.scaleLerp = new Lerpable(this.scale)
+      this.geometry.computeVertexNormals()
    }
 
-   lerpScale = (radius: number) => {
-      this.scaleLerp.set(new THREE.Vector3(radius, radius, radius))
-   }
-
-   set radius(radius: number) {
-      this.scale.set(radius, radius, radius)
-   }
-
-   get radius() {
-      return this.scale.x
-   }
-
-   tick = (time: number) => {
-      this.material.tick(time)
-      this.scaleLerp.tick()
-   }
-}
-
-export class WonkyMaterial extends THREE.MeshStandardMaterial {
-   shader: THREE.Shader | undefined
-   noiseId: number = Math.random() * 100
-   _color: Lerpable<THREE.Color>
-
-   constructor({ color = '#fff', metalness = 0.5, roughness = 0.5 } = {}) {
-      super({ color, metalness, roughness })
-      this._color = new Lerpable(this.color)
-      this.onBeforeCompile = (shader) => {
-         this.shader = shader
-         this.updateShaderCode(shader)
-      }
-   }
-
-   setColor(color: THREE.Color, instant = false) {
-      if (instant) {
-         this.color.copy(color)
-      } else {
-         this._color.set(color)
-      }
-   }
-
-   updateShaderCode = (shader: THREE.Shader) => {
+   updateShaderCode = (shader: THREE.Shader, noiseSpeed: number, noiseAmount: number) => {
       shader.uniforms.uTime = { value: 0 }
       shader.uniforms.uNoiseId = { value: this.noiseId }
+      shader.uniforms.uSpeed = { value: noiseSpeed }
+      shader.uniforms.uNoiseAmount = { value: noiseAmount }
       // https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
       shader.vertexShader = shader.vertexShader.replace(
          `#include <common>`,
          `#include <common>
          uniform float uTime;
          uniform float uNoiseId;
+         uniform float uNoiseAmount;
+         uniform float uSpeed;
          ${perlin3d}`
       )
 
@@ -141,9 +124,13 @@ export class WonkyMaterial extends THREE.MeshStandardMaterial {
    }
 
    tick = (time: number) => {
-      if (this.shader) {
-         this.shader.uniforms.uTime.value = time
-         this._color.tick()
-      }
+      if (this.shader) this.shader.uniforms.uTime.value = time
+   }
+
+   dispose = () => {
+      this._color.cancel()
+      this._scale.cancel()
+      this.geometry.dispose()
+      this.material.dispose()
    }
 }

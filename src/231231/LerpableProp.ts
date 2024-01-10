@@ -26,7 +26,7 @@ export default class Lerpable<T extends LerpableType> {
    _target: T
    _prop: T
    _lerpStrategy: LerpStrategy<T>
-   animating: boolean = false
+   raf: number = 0
 
    constructor(prop: T) {
       this._target = prop
@@ -44,12 +44,21 @@ export default class Lerpable<T extends LerpableType> {
    set(value: T) {
       this._target = value
 
-      this.animating = true
+      if (this.raf) window.cancelAnimationFrame(this.raf)
+      this.raf = window.requestAnimationFrame(this.tick)
    }
 
    tick = () => {
-      if (this.animating) {
-         this.animating = this._lerpStrategy(this._prop, this._target)
+      let animating = this._lerpStrategy(this._prop, this._target)
+      if (animating) {
+         window.requestAnimationFrame(this.tick)
+      } else {
+         this.raf = 0
       }
+   }
+
+   cancel = () => {
+      if (this.raf) window.cancelAnimationFrame(this.raf)
+      this.raf = 0
    }
 }

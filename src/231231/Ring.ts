@@ -67,6 +67,8 @@ export default class Ring extends THREE.Group {
    _wonkyMetalness: number
    _wonkyRoughness: number
    _innerPosY: number
+   _wonkyShapeNoiseAmount: number
+   _wonkyShapeNoiseSpeed: number
 
    needsUpdate = {
       innerMaterial: false,
@@ -125,13 +127,14 @@ export default class Ring extends THREE.Group {
       this._wonkyVary = wonkyShapeOptions.vary ?? 0.2
       this._wonkyMetalness = wonkyShapeOptions.metalness ?? 0.5
       this._wonkyRoughness = wonkyShapeOptions.roughness ?? 0.5
+      this._wonkyShapeNoiseAmount = wonkyShapeOptions.noiseAmount ?? 0.3
+      this._wonkyShapeNoiseSpeed = wonkyShapeOptions.noiseSpeed ?? 0.001
       this.rebuild()
    }
 
    rebuild = () => {
       this.wonkyShapes.forEach((item) => {
-         item.material.dispose()
-         item.geometry.dispose()
+         item.dispose()
          this.remove(item)
       })
       this.wonkyShapes = []
@@ -141,6 +144,8 @@ export default class Ring extends THREE.Group {
          vary: this._wonkyVary,
          metalness: this._wonkyMetalness,
          roughness: this._wonkyRoughness,
+         noiseAmount: this._wonkyShapeNoiseAmount,
+         noiseSpeed: this._wonkyShapeNoiseSpeed,
       }
 
       for (let i = 0; i < this.count; i++) {
@@ -198,12 +203,18 @@ export default class Ring extends THREE.Group {
    get innerPosY() {
       return this._innerPosY
    }
+   get wonkyShapeNoiseAmount() {
+      return this._wonkyShapeNoiseAmount
+   }
+   get wonkyShapeNoiseSpeed() {
+      return this._wonkyShapeNoiseSpeed
+   }
 
    set wonkyRadius(value: number) {
       this._wonkyRadius = value
       // this.rebuild()
       this.wonkyShapes.forEach((shape) => {
-         shape.radius = value
+         shape.setScale(value)
       })
    }
    set wonkyVary(value: number) {
@@ -221,6 +232,14 @@ export default class Ring extends THREE.Group {
    set innerPosY(value: number) {
       this._innerPosY = value
       this.needsUpdate.innerPos = true
+   }
+   set wonkyShapeNoiseAmount(value: number) {
+      this._wonkyShapeNoiseAmount = value
+      this.wonkyShapes.forEach((shape) => (shape.noiseAmount = value))
+   }
+   set wonkyShapeNoiseSpeed(value: number) {
+      this._wonkyShapeNoiseSpeed = value
+      this.wonkyShapes.forEach((shape) => (shape.noiseSpeed = value))
    }
 
    /**
@@ -329,8 +348,8 @@ export default class Ring extends THREE.Group {
    }
 
    setIntersecting = (index: number) => {
-      this.wonkyShapes[index].material.setColor(new THREE.Color('#ffffff'))
-      this.wonkyShapes[index].lerpScale(this._wonkyRadius * 1.25)
+      this.wonkyShapes[index].setColor(new THREE.Color('#ffffff'))
+      this.wonkyShapes[index].setScale(this._wonkyRadius * 1.25)
       this.intersecting = index
    }
 
@@ -344,9 +363,8 @@ export default class Ring extends THREE.Group {
          this.getColorCoordAtIndex(this.intersecting, 'blue')
       )
 
-      shape.material.setColor(colorToSet)
-
-      shape.lerpScale(this._wonkyRadius)
+      shape.setColor(colorToSet)
+      shape.setScale(this._wonkyRadius)
       this.intersecting = null
    }
 
@@ -369,5 +387,16 @@ export default class Ring extends THREE.Group {
 
       this.needsUpdate.innerMaterial = false
       this.needsUpdate.innerPos = false
+   }
+
+   dispose = () => {
+      this.wonkyShapes.forEach((item) => {
+         item.dispose()
+         this.remove(item)
+      })
+      this.outerMaterial.dispose()
+      this.outerGeometry.dispose()
+      this.remove(this.outerInstance)
+      this.outerInstance.dispose()
    }
 }

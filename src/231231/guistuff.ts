@@ -1,8 +1,8 @@
 import { GUI } from 'lil-gui'
 import * as THREE from 'three'
 import Ring from './Ring'
-import FloorMirror from './FloorMirror'
-import Experience from './231231'
+import Experience, { ExpParams } from './231231'
+import presets from './presets'
 
 export const lightGui = (
    light: THREE.AmbientLight | THREE.DirectionalLight | THREE.PointLight,
@@ -14,7 +14,7 @@ export const lightGui = (
       color: light.color.getHexString(),
    }
    folder.addColor(lightParams, 'color').onChange((val: string) => light.color.set(val))
-   folder.add(light, 'intensity', 0, 100, 0.1)
+   folder.add(light, 'intensity', 0, 15, 0.1)
    folder.add(light, 'visible')
 
    if (light instanceof THREE.AmbientLight) return
@@ -49,6 +49,8 @@ export const ringGui = (ring: Ring, gui: GUI) => {
    f.add(ring, 'ringRadius', 0, 100, 1)
    f.add(ring, 'count', 0, 100, 1)
    f.add(ring, 'innerPosY', -10, 10, 0.1)
+   f.add(ring, 'wonkyShapeNoiseSpeed', 0, 0.05, 0.0001).name('noiseSpeed')
+   f.add(ring, 'wonkyShapeNoiseAmount', 0, 5, 0.01).name('noiseAmount')
    f.add(ring.position, 'y', -10, 10, 0.1)
 
    const colorsFolder = gui.addFolder('Shape Colors').close()
@@ -62,36 +64,39 @@ export const ringGui = (ring: Ring, gui: GUI) => {
    }
 }
 
-export const mirrorGui = (mirror: FloorMirror, gui: GUI) => {
-   const floorFolder = gui.addFolder('Floor/Mirror')
-   floorFolder.add(mirror.floor.material, 'opacity', 0, 1, 0.01)
-   floorFolder.add(mirror.floor.material, 'roughness', 0, 3, 0.01).name('floorRoughness')
-   floorFolder.add(mirror.floor.material, 'metalness', 0, 3, 0.01).name('floorMetalness')
+export const mirrorGui = (env: Experience) => {
+   let { gui, mirror } = env
+   const f = gui.addFolder('Floor/Mirror')
+   f.add(mirror.floor.material, 'opacity', 0, 1, 0.01)
+   f.add(mirror.floor.material, 'roughness', 0, 3, 0.01).name('floorRoughness')
+   f.add(mirror.floor.material, 'metalness', 0, 3, 0.01).name('floorMetalness')
+   f.add(env.mirrorX, 'min', -100, 100, 1).name('mirrorXmin')
+   f.add(env.mirrorX, 'max', -100, 100, 1).name('mirrorXmax')
+   f.add(env.mirrorZ, 'min', -100, 100, 1).name('mirrorZmin')
+   f.add(env.mirrorZ, 'max', -100, 100, 1).name('mirrorZmax')
    const floorParams = {
       mirrorColor: mirror.mirrorColor,
       floorColor: mirror.floor.material.color.getHexString(),
    }
-   floorFolder.addColor(floorParams, 'floorColor').onChange((val: string) => {
+   f.addColor(floorParams, 'floorColor').onChange((val: string) => {
       mirror.floor.material.color.set(val)
    })
-   floorFolder.addColor(floorParams, 'mirrorColor').onChange((val: string) => {
+   f.addColor(floorParams, 'mirrorColor').onChange((val: string) => {
       mirror.mirrorColor = val
    })
 
-   floorFolder
-      .add(mirror.size, 'x', 0, 1000, 0.1)
+   f.add(mirror.size, 'x', 0, 1000, 0.1)
       .name('width')
       .onChange((val: number) => {
          mirror.size = new THREE.Vector2(val, mirror.size.y)
       })
-   floorFolder
-      .add(mirror.size, 'y', 0, 1000, 0.1)
+   f.add(mirror.size, 'y', 0, 1000, 0.1)
       .name('height')
       .onChange((val: number) => {
          mirror.size = new THREE.Vector2(mirror.size.x, val)
       })
 
-   floorFolder.close()
+   f.close()
 }
 
 export const sceneGui = (env: Experience) => {
@@ -99,10 +104,11 @@ export const sceneGui = (env: Experience) => {
 
    let clearColor = new THREE.Color()
    env.world.renderer.getClearColor(clearColor)
-   const p = { clearColor: clearColor.getHexString() }
-
-   sceneFolder.addColor(p, 'clearColor').onChange((val: string) => {
-      env.world.renderer.setClearColor(val)
+   let params = {
+      clearColor: clearColor.getHexString(),
+   }
+   sceneFolder.addColor(params, 'clearColor').onChange((val: string) => {
+      env.clearColor = val
    })
 
    sceneFolder
@@ -120,10 +126,91 @@ const getGui = (env: Experience) => {
    sceneGui(env)
    let lightsFolder = env.gui.addFolder('Lights').close()
    lightGui(env.lights.ambient, lightsFolder)
-   lightGui(env.lights.directional, lightsFolder)
-   lightGui(env.lights.point, lightsFolder)
+   lightGui(env.lights.directional, lightsFolder, env.lights.dirHelper)
+   lightGui(env.lights.point, lightsFolder, env.lights.pointHelper)
    ringGui(env.ring, env.gui)
-   mirrorGui(env.mirror, env.gui)
+   mirrorGui(env)
+
+   let params = {
+      preset: '',
+      getPreset: () => getPreset(env),
+   }
+   let presetOpts = [''].concat(Object.keys(presets))
+   env.gui.add(params, 'preset', presetOpts).onChange((val: number | string) => {
+      // console.log(val)
+      if (presets[+val]) {
+         env.dispose()
+         env.setFromParams(presets[+val])
+      }
+   })
+   env.gui.add(params, 'getPreset')
+}
+
+const getPreset = (env: Experience) => {
+   const getPositionCode = (pos: THREE.Vector3) => {
+      return `new THREE.Vector3(${pos.x}, ${pos.y}, ${pos.z})`
+   }
+   let preset = {
+      clearColor: `#${env.clearColor}`,
+      lightOptions: {
+         ambient: {
+            color: `#${env.lights.ambient.color.getHexString()}`,
+            intensity: env.lights.ambient.intensity,
+            visible: env.lights.ambient.visible,
+         },
+         directional: {
+            visible: env.lights.directional.visible,
+            intensity: env.lights.directional.intensity,
+            color: `#${env.lights.directional.color.getHexString()}`,
+            position: getPositionCode(env.lights.directional.position),
+         },
+         point: {
+            color: `#${env.lights.point.color.getHexString()}`,
+            visible: env.lights.point.visible,
+            position: getPositionCode(env.lights.point.position),
+            intensity: env.lights.point.intensity,
+            distance: env.lights.point.distance,
+            decay: env.lights.point.decay,
+         },
+      },
+      ringOptions: {
+         innerPosY: env.ring.innerPosY,
+         posY: env.ring.position.y,
+         outerOpacity: env.ring.outerMaterial.opacity,
+         metalness: env.ring.outerMaterial.metalness,
+         roughness: env.ring.outerMaterial.roughness,
+         coneRadius: env.ring.coneRadius,
+         coneHeight: env.ring.coneHeight,
+         coneSegments: env.ring.coneSegments,
+         ringRadius: env.ring.ringRadius,
+         count: env.ring.count,
+         wonkyShapeOptions: {
+            vary: env.ring.wonkyVary,
+            radius: env.ring.wonkyRadius,
+            roughness: env.ring.wonkyRoughness,
+            metalness: env.ring.wonkyMetalness,
+            noiseAmount: env.ring.wonkyShapeNoiseAmount,
+            noiseSpeed: env.ring.wonkyShapeNoiseSpeed,
+         },
+         colorOpts: {
+            ...env.ring.colorOpts,
+         },
+      },
+      mirrorOptions: {
+         mirrorColor: env.mirror.mirrorColor,
+         screenColor: `#${env.mirror.floor.material.color.getHexString()}`,
+         screenRoughness: env.mirror.floor.material.roughness,
+         screenMetalness: env.mirror.floor.material.metalness,
+         screenOpacity: env.mirror.floor.material.opacity,
+      },
+   }
+
+   let str = JSON.stringify(preset, null, 3)
+   str = str.replace(/"([^"]+)":/g, '$1:')
+   str = str.replace(/"(new THREE.Vector3\(.+, .+, .+\))"/g, '$1')
+   navigator.clipboard.writeText(str).then(() => {
+      console.log('copied preset to clipboard')
+   })
 }
 
 export default getGui

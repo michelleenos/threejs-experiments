@@ -1,11 +1,12 @@
 export const transformNoise3d = /*glsl*/ `
-    vec3 tx = vec3(transformed.x, transformed.y, transformed.z + uTime * 0.001 + uNoiseId * 100.0);
-    vec3 ty = vec3(transformed.y, transformed.z, transformed.z + uTime * 0.001 + uNoiseId * 100.0);
-    vec3 tz = vec3(transformed.z, transformed.x, transformed.z + uTime * 0.001 + uNoiseId * 100.0);
+    float t = uTime * uSpeed + uNoiseId * 100.0;
+    vec3 tx = vec3(transformed.x, transformed.y, transformed.z + t);
+    vec3 ty = vec3(transformed.y, transformed.z, transformed.z + t);
+    vec3 tz = vec3(transformed.z, transformed.x, transformed.z + t);
 
-    transformed.x += cnoise(tx) * 0.2;
-    transformed.y += cnoise(ty) * 0.2;
-    transformed.z += cnoise(tz) * 0.2;
+    transformed.x += cnoise(tx) * uNoiseAmount;
+    transformed.y += cnoise(ty) * uNoiseAmount;
+    transformed.z += cnoise(tz) * uNoiseAmount;
 `
 
 export const transformNoise2d = /*glsl*/ `
