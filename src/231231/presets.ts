@@ -47,7 +47,7 @@ const preset1: ExpParams = {
    },
    mirrorOptions: {
       mirrorColor: '#428a8a',
-      screenColor: '#ffdbdb',
+      screenColor: '#e8b5b5',
       screenRoughness: 0,
       screenMetalness: 0,
       screenOpacity: 0.4,

@@ -10,6 +10,11 @@ export const fract = (x: number) => {
    return x - Math.floor(x)
 }
 
+export const round = (x: number, precision: number = 1) => {
+   const factor = Math.pow(10, precision)
+   return Math.round(x * factor) / factor
+}
+
 export const clamp = (x: number, min: number, max: number) => {
    return Math.min(Math.max(x, min), max)
 }

@@ -47,13 +47,18 @@ export interface ExpParams {
 
 const lightParamsDefaults = {
    ambient: { color: '#fafafa', visible: false },
-   directional: { color: '#e5ffff', visible: true, position: new THREE.Vector3(-150, -6, -30) },
+   directional: {
+      color: '#e5ffff',
+      intensity: 5.8,
+      visible: true,
+      position: new THREE.Vector3(-150, -6, -30),
+   },
    point: {
-      color: '#8437ff',
+      color: '#d9c2ff',
       intensity: 9,
       distance: 0,
       decay: 0.1,
-      position: new THREE.Vector3(-10, 80, 45),
+      position: new THREE.Vector3(-10, 57, 45),
       visible: true,
    },
 }
@@ -85,6 +90,8 @@ export default class Experience {
 
    constructor(params: ExpParams = {}) {
       this.stats = new Stats()
+      this.stats.dom.style.bottom = '0px'
+      this.stats.dom.style.top = ''
       document.body.appendChild(this.stats.dom)
       this.sizes = new Sizes()
       this.mouse = new Mouse(this.sizes)
@@ -170,17 +177,12 @@ export default class Experience {
       getGui(this)
    }
 
-   // get clearColor() {
-   //    let clearColor = new THREE.Color()
-   //    this.world.renderer.getClearColor(clearColor)
-   //    return clearColor.getHexString()
-   // }
-
    set clearColor(color: string) {
       this.world.renderer.setClearColor(color)
    }
 
    tick = () => {
+      this.stats.begin()
       const time = this.timer.elapsed
 
       this.ring.tick(time)
@@ -197,7 +199,7 @@ export default class Experience {
       this.ring.rotation.y += this.wheelVelocity
 
       this.world.render()
-      this.stats.update()
+      this.stats.end()
    }
 
    dispose = () => {

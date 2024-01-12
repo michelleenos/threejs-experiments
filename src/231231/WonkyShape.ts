@@ -33,7 +33,11 @@ export default class WonkyShape extends THREE.Mesh<
       noiseAmount = 0.3,
    }: WonkyShapeOptions = {}) {
       let geometry = new THREE.OctahedronGeometry(1, 1)
-      let material = new THREE.MeshStandardMaterial({ color, metalness, roughness })
+      let material = new THREE.MeshStandardMaterial({
+         color,
+         metalness,
+         roughness,
+      })
 
       material.onBeforeCompile = (shader) => {
          this.shader = shader

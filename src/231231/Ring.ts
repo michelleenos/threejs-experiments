@@ -121,7 +121,6 @@ export default class Ring extends THREE.Group {
       this.outerInstance = new THREE.InstancedMesh(this.outerGeometry, this.outerMaterial, count)
       this.outerInstance.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
       this.outerInstance.position.set(0, 0, 0)
-      this.add(this.outerInstance)
 
       this._wonkyRadius = wonkyShapeOptions.radius ?? 4
       this._wonkyVary = wonkyShapeOptions.vary ?? 0.2
@@ -130,6 +129,8 @@ export default class Ring extends THREE.Group {
       this._wonkyShapeNoiseAmount = wonkyShapeOptions.noiseAmount ?? 0.3
       this._wonkyShapeNoiseSpeed = wonkyShapeOptions.noiseSpeed ?? 0.001
       this.rebuild()
+
+      this.add(this.outerInstance)
    }
 
    rebuild = () => {
@@ -150,6 +151,7 @@ export default class Ring extends THREE.Group {
 
       for (let i = 0; i < this.count; i++) {
          let wonkyShape = new WonkyShape(opts)
+
          this.wonkyShapes.push(wonkyShape)
          this.add(wonkyShape)
       }

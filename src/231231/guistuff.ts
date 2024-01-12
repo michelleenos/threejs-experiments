@@ -29,6 +29,7 @@ export const lightGui = (
    }
 
    if (helper) {
+      helper.visible = false
       folder.add(helper, 'visible').name('helper')
       folder.onChange(() => helper.update())
    }
