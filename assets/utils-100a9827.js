@@ -1,0 +1,1 @@
+const s=(r=1,t)=>t?Math.random()*(t-r)+r:Math.random()*r,c=r=>r-Math.floor(r),e=(r,t=1)=>{const a=Math.pow(10,t);return Math.round(r*a)/a},u=(r,t,a)=>Math.min(Math.max(r,t),a),m=(r,t,a)=>r*(1-a)+t*a,h=(r,t,a,n,o)=>n+(o-n)*((r-t)/(a-t));export{s as a,u as c,c as f,m as l,h as m,e as r};
