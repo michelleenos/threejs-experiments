@@ -12,9 +12,11 @@ const world = new World(sizes)
 const clock = new THREE.Clock()
 const gui = new GUI()
 
-world.camera.position.set(0, 6, 4)
+world.camera.position.set(16, 7.5, -15)
 world.renderer.outputColorSpace = THREE.SRGBColorSpace
 world.controls.zoomSpeed = 0.5
+
+window.world = world
 
 /**
  * Loaders
@@ -64,6 +66,7 @@ gltfLoader.load('./house2.glb', (gltf) => {
    }
 
    world.scene.add(gltf.scene)
+   gltf.scene.position.y = -2
 })
 
 /**
@@ -71,7 +74,7 @@ gltfLoader.load('./house2.glb', (gltf) => {
  */
 
 const debg = {
-   clearColor: '#ffffff',
+   clearColor: '#0e0033',
    windowColor: windowMaterial.color.getHexString(),
    lampColor: lampMaterial.color.getHexString(),
 }
