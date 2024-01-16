@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import Sizes from './Sizes'
+import Sizes from './sizes'
 import { OrbitControls } from 'three/examples/jsm/Addons.js'
 
 export default class World {

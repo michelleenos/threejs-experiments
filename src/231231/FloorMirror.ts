@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { Reflector } from 'three/examples/jsm/Addons.js'
-import Sizes from '../utils/Sizes'
+import Sizes from '../utils/sizes'
 
 export type MirrorOpts = {
    size?: THREE.Vector2

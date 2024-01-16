@@ -1,13 +1,9 @@
 import '../style.css'
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/Addons.js'
 import { ParametricGeometry } from 'three/examples/jsm/Addons.js'
-import Sizes from '../utils/Sizes'
-import Timer from '../utils/Time'
+import Sizes from '../utils/sizes'
+import Timer from '../utils/timer'
 import World from '../utils/World'
-import { fract, map } from '../utils'
-import vertexShader from './vert.glsl'
-import fragmentShader from './frag.glsl'
 import { GUI } from 'lil-gui'
 
 const timer = new Timer()

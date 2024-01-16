@@ -1,4 +1,4 @@
-import Sizes from './Sizes'
+import Sizes from './sizes'
 import EventEmitter from './event-emitter'
 import * as THREE from 'three'
 
