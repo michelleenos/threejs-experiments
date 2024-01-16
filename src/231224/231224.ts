@@ -1,7 +1,7 @@
 import '../style.css'
 import * as THREE from 'three'
 import Sizes from '../utils/Sizes'
-import Timer from '../utils/Timer'
+import Timer from '../utils/Time'
 import World from '../utils/World'
 import { easing } from '../utils/easings'
 import Rings, { ringsFns } from './Rings'

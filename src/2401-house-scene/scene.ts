@@ -16,8 +16,6 @@ world.camera.position.set(16, 7.5, -15)
 world.renderer.outputColorSpace = THREE.SRGBColorSpace
 world.controls.zoomSpeed = 0.5
 
-window.world = world
-
 /**
  * Loaders
  */
