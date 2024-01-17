@@ -38,7 +38,7 @@ const gltfLoader = new GLTFLoader()
  * Textures & Materials
  */
 
-const baseUrl = import.meta.env.BASE_URL
+const baseUrl = import.meta.env.DEV ? '' : import.meta.env.BASE_URL
 const bakedTexture = textureLoader.load(baseUrl + '/scenes/portal/baked.jpg')
 bakedTexture.flipY = false
 bakedTexture.colorSpace = THREE.SRGBColorSpace
