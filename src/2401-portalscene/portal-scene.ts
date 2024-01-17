@@ -31,7 +31,7 @@ world.controls.minDistance = 1
  * Loaders
  */
 
-const loader = new Loader(world.scene)
+const loader = new Loader()
 
 const textureLoader = new THREE.TextureLoader(loader.manager)
 const gltfLoader = new GLTFLoader(loader.manager)

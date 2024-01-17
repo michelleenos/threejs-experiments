@@ -53,8 +53,6 @@ export default class Fireflies {
       this.sizes = world.sizes
       this.world.scene.add(this.points)
 
-      // this.scene = scene
-      // this.sizes = sizes
       this.sizes.on('resize', this.onResize)
    }
 

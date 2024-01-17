@@ -1,73 +1,90 @@
 import * as THREE from 'three'
-import { lerp } from '../utils'
+
+const createElement = (
+   tag: string,
+   atts: { [key: string]: any } = {},
+   children: (string | Element)[] = []
+) => {
+   const el = document.createElement(tag)
+   Object.keys(atts).forEach((key) => {
+      el.setAttribute(key, atts[key])
+   })
+   children.forEach((child) => {
+      el.appendChild(typeof child === 'string' ? document.createTextNode(child) : child)
+   })
+   return el
+}
+
+const styles = `
+.loader__bar {
+   position: fixed;
+   z-index: 100;
+   width: 100%;
+   height: 10px;
+   background: #ff8a2b;
+   left: 0;
+   bottom: 0;
+   transition: transform 0.5s ease-out; 
+   transform-origin: left;
+   transform: scaleX(0);
+}
+
+.loader__cover {
+   position: fixed;
+   z-index: 99;
+   width: 100%;
+   height: 100%;
+   background: #000;
+   left: 0;
+   top: 0;
+   transition: opacity 0.8s ease-in-out;
+}
+
+.loader--finished .loader__bar,
+.loader--finished .loader__cover {
+   pointer-events: none;
+}
+.loader--finished .loader__bar {
+   transition: transform 0.4s linear;
+}
+`
 
 export default class Loader {
-   scene: THREE.Scene
-   geometry: THREE.PlaneGeometry
-   material: THREE.ShaderMaterial
-   mesh: THREE.Mesh
    manager: THREE.LoadingManager
+   cover: HTMLElement
    bar: HTMLElement
-   _opacity: THREE.IUniform<number>
+   container: HTMLElement
+   style: HTMLElement
    onReady?: () => any
 
-   constructor(scene: THREE.Scene, onReady?: () => any) {
+   constructor(onReady?: () => any) {
       this.onReady = onReady
-      this.geometry = new THREE.PlaneGeometry(2, 2, 1, 1)
-      this.material = new THREE.ShaderMaterial({
-         transparent: true,
-         uniforms: { uAlpha: { value: 1.0 } },
-         vertexShader: `void main() {gl_Position = vec4(position, 1.0);}`,
-         fragmentShader: `
-            uniform float uAlpha;
-            void main() {
-               gl_FragColor = vec4(0.0, 0.0, 0.0, uAlpha);
-            }
-         `,
-      })
-      this._opacity = this.material.uniforms.uAlpha
-
-      this.mesh = new THREE.Mesh(this.geometry, this.material)
       this.manager = new THREE.LoadingManager(this.onFinished, this.onProgress)
 
-      this.bar = document.createElement('div')
-      this.bar.setAttribute(
-         'style',
-         'position: absolute; width: 100%; height: 20px; background: #fff; left: 0; bottom: 0; transform-origin: left; transform: scaleX(0); z-index: 100; transition: all 0.5s ease-out;'
-      )
-
-      document.body.appendChild(this.bar)
-      this.scene = scene
-      this.scene.add(this.mesh)
-   }
-
-   tickFadeOut = () => {
-      let amount = lerp(this._opacity.value, 0, 0.01)
-      this._opacity.value = amount
-      if (amount > 0.01) {
-         window.requestAnimationFrame(this.tickFadeOut)
-      } else {
-         this.dispose()
-      }
+      this.bar = createElement('div', { class: 'loader__bar' })
+      this.cover = createElement('div', { class: 'loader__cover' })
+      this.container = createElement('div', { class: 'loader' }, [this.bar, this.cover])
+      this.style = createElement('style', {}, [styles])
+      document.body.append(this.container, this.style)
    }
 
    onFinished = () => {
       window.setTimeout(() => {
-         this.bar.style.transform = ''
-         this.bar.style.opacity = '0'
-         window.requestAnimationFrame(this.tickFadeOut)
+         this.cover.style.opacity = '0'
          if (this.onReady) this.onReady()
-      }, 2000)
+      }, 1000)
+
+      window.setTimeout(() => {
+         this.bar.style.transform = 'scaleX(0)'
+         this.bar.style.transformOrigin = 'right'
+      }, 800)
+
+      this.container.classList.add('loader--finished')
    }
 
    onProgress = (_: any, itemsLoaded: number, itemsTotal: number) => {
       const progress = itemsLoaded / itemsTotal
+      console.log(progress)
       this.bar.style.transform = `scaleX(${progress})`
-   }
-
-   dispose() {
-      this.scene.remove(this.mesh)
-      this.material.dispose()
-      this.geometry.dispose()
    }
 }
