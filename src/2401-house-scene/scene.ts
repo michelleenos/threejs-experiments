@@ -27,7 +27,8 @@ const gltfLoader = new GLTFLoader()
  * Textures & Materials
  */
 
-const bakedTexture = textureLoader.load('./bakehouse2.jpg')
+const baseUrl = import.meta.env.BASE_URL
+const bakedTexture = textureLoader.load(baseUrl + '/house/baked.jpg')
 bakedTexture.flipY = false
 bakedTexture.colorSpace = THREE.SRGBColorSpace
 const bakedMaterial = new THREE.MeshBasicMaterial({ map: bakedTexture })
@@ -42,9 +43,7 @@ const windowMaterial = new THREE.MeshBasicMaterial({
 /**
  * Model
  */
-gltfLoader.load('./house2.glb', (gltf) => {
-   console.log(gltf)
-
+gltfLoader.load(baseUrl + '/house/house2.glb', (gltf) => {
    const children = gltf.scene.children
    const emissionWindow = children.find((child) => child.name === 'emissionWindow')
    const emissionRoundWindow = children.find((child) => child.name === 'emissionRoundWindow')
