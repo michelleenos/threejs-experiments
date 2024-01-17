@@ -38,7 +38,8 @@ const gltfLoader = new GLTFLoader()
  * Textures & Materials
  */
 
-const bakedTexture = textureLoader.load('/scenes/portal/baked.jpg')
+const baseUrl = import.meta.env.BASE_URL
+const bakedTexture = textureLoader.load(baseUrl + '/scenes/portal/baked.jpg')
 bakedTexture.flipY = false
 bakedTexture.colorSpace = THREE.SRGBColorSpace
 const bakedMaterial = new THREE.MeshBasicMaterial({ map: bakedTexture })
@@ -64,7 +65,7 @@ const portalLightMaterial = new THREE.ShaderMaterial({
 /**
  * Model
  */
-gltfLoader.load('/scenes/portal/portal-merged.glb', (gltf) => {
+gltfLoader.load(baseUrl + '/scenes/portal/portal-merged.glb', (gltf) => {
    const portalScene = gltf.scene
 
    portalScene.traverse((child) => {
