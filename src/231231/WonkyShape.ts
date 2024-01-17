@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { perlin3d, transformNoise3d } from './shadercode'
-import Lerpable from './LerpableProp'
+import Lerpable from '../utils/LerpableProp'
 
 export interface WonkyShapeOptions {
    radius?: number

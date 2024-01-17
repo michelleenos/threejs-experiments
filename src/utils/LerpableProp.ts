@@ -3,7 +3,18 @@ import { lerp } from '../utils'
 
 type LerpableType = number | THREE.Vector3 | THREE.Color
 
-type LerpStrategy<T extends LerpableType> = (prop: T, target: T) => boolean
+interface Lerpable<T extends LerpableType> {
+   _target: T
+   _prop: T
+   _lerpStrategy: (prop: T, target: T) => boolean
+
+   set(value: T): void
+}
+
+type LerpStrategy<T extends LerpableType> = (
+   prop: T,
+   target: T extends THREE.Uniform<number> ? number : T
+) => boolean
 
 const lerpStrategies: {
    [key: string]: LerpStrategy<any>
@@ -22,14 +33,16 @@ const lerpStrategies: {
    },
 }
 
-export default class Lerpable<T extends LerpableType> {
-   _target: T
-   _prop: T
-   _lerpStrategy: LerpStrategy<T>
+class Lerpable<T extends LerpableType> {
    raf: number = 0
 
    constructor(prop: T) {
-      this._target = prop
+      if (prop instanceof THREE.Uniform) {
+         this._target = prop.value
+      } else {
+         this._target = prop
+      }
+
       this._prop = prop
 
       if (prop instanceof THREE.Vector3) {
@@ -43,7 +56,6 @@ export default class Lerpable<T extends LerpableType> {
 
    set(value: T) {
       this._target = value
-
       if (this.raf) window.cancelAnimationFrame(this.raf)
       this.raf = window.requestAnimationFrame(this.tick)
    }
@@ -62,3 +74,5 @@ export default class Lerpable<T extends LerpableType> {
       this.raf = 0
    }
 }
+
+export default Lerpable

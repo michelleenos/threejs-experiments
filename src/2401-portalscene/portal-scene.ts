@@ -4,10 +4,10 @@ import { GLTFLoader } from 'three/examples/jsm/Addons.js'
 import World from '../utils/World'
 import Sizes from '../utils/sizes'
 import GUI from 'lil-gui'
-import firefliesFragment from './glsl/fireflies/fragment.glsl'
-import firefliesVertex from './glsl/fireflies/vertex.glsl'
 import portalVertex from './glsl/portal/vertex.glsl'
 import portalFragment from './glsl/portal/fragment.glsl'
+import Loader from '../utils/loading-overlay'
+import Fireflies from './Fireflies'
 
 THREE.ColorManagement.enabled = true
 
@@ -31,8 +31,10 @@ world.controls.minDistance = 1
  * Loaders
  */
 
-const textureLoader = new THREE.TextureLoader()
-const gltfLoader = new GLTFLoader()
+const loader = new Loader(world.scene)
+
+const textureLoader = new THREE.TextureLoader(loader.manager)
+const gltfLoader = new GLTFLoader(loader.manager)
 
 /**
  * Textures & Materials
@@ -63,6 +65,12 @@ const portalLightMaterial = new THREE.ShaderMaterial({
 })
 
 /**
+ * Fireflies
+ */
+
+const fireflies = new Fireflies(world)
+
+/**
  * Model
  */
 gltfLoader.load(baseUrl + '/scenes/portal/portal-merged.glb', (gltf) => {
@@ -84,47 +92,6 @@ gltfLoader.load(baseUrl + '/scenes/portal/portal-merged.glb', (gltf) => {
 })
 
 /**
- * Fireflies
- */
-
-const firefliesGeometry = new THREE.BufferGeometry()
-const firefliesCount = 30
-const positionArray = new Float32Array(firefliesCount * 3)
-
-for (let i = 0; i < firefliesCount; i++) {
-   positionArray[i * 3] = (Math.random() - 0.5) * 4
-   positionArray[i * 3 + 1] = 0.25 + Math.random() * 1.25
-   positionArray[i * 3 + 2] = (Math.random() - 0.5) * 4
-}
-firefliesGeometry.setAttribute('position', new THREE.BufferAttribute(positionArray, 3))
-
-const scaleArray = new Float32Array(firefliesCount)
-for (let i = 0; i < firefliesCount; i++) {
-   scaleArray[i] = Math.random()
-}
-firefliesGeometry.setAttribute('aScale', new THREE.BufferAttribute(scaleArray, 1))
-
-const firefliesMaterial = new THREE.ShaderMaterial({
-   uniforms: {
-      uPixelRatio: { value: sizes.pixelRatio },
-      uSize: { value: 100 },
-      uTime: { value: 0 },
-   },
-   vertexShader: firefliesVertex,
-   fragmentShader: firefliesFragment,
-   transparent: true,
-   depthWrite: false,
-   blending: THREE.AdditiveBlending,
-})
-
-const fireflies = new THREE.Points(firefliesGeometry, firefliesMaterial)
-world.scene.add(fireflies)
-
-sizes.on('resize', () => {
-   firefliesMaterial.uniforms.uPixelRatio.value = sizes.pixelRatio
-})
-
-/**
  * GUI
  */
 
@@ -138,7 +105,7 @@ world.renderer.setClearColor(debg.clearColor)
 gui.addColor(debg, 'clearColor').onChange((val: string) => {
    world.renderer.setClearColor(val)
 })
-gui.add(firefliesMaterial.uniforms.uSize, 'value', 0, 500, 1).name('firefliesSize')
+gui.add(fireflies.material.uniforms.uSize, 'value', 0, 500, 1).name('firefliesSize')
 gui.addColor(debg, 'poleLightColor').onChange((val: string) => {
    poleLightMaterial.color.set(val)
 })
@@ -166,9 +133,9 @@ gui.close()
 
 const animate = () => {
    const time = clock.getElapsedTime()
-   firefliesMaterial.uniforms.uTime.value = time
-   portalLightMaterial.uniforms.uTime.value = time
 
+   portalLightMaterial.uniforms.uTime.value = time
+   fireflies.tick(time)
    world.render()
 
    window.requestAnimationFrame(animate)
