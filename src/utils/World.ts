@@ -33,6 +33,6 @@ export default class World {
 
    render = () => {
       this.renderer.render(this.scene, this.camera)
-      this.controls.update()
+      if (this.controls.enabled) this.controls.update()
    }
 }

@@ -1,5 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700&display=swap');
+
 :root {
-   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+   font-family: 'Mulish', sans-serif;
    line-height: 1.5;
    font-weight: 400;
 
@@ -13,9 +15,15 @@
    -webkit-text-size-adjust: 100%;
 }
 
+*,
+*:before,
+*:after {
+   box-sizing: border-box;
+}
+
 a {
    font-weight: 500;
-   color: #646cff;
+   color: #64ffd8;
    text-decoration: inherit;
 }
 a:hover {
@@ -28,26 +36,25 @@ body {
    min-width: 320px;
    min-height: 100vh;
    overscroll-behavior: none;
-   overflow-y: hidden;
 }
 
-button {
-   border-radius: 8px;
-   border: 1px solid transparent;
-   padding: 0.6em 1.2em;
-   font-size: 1em;
-   font-weight: 500;
-   font-family: inherit;
-   background-color: #1a1a1a;
-   cursor: pointer;
-   transition: border-color 0.25s;
+canvas {
+   position: fixed;
+   left: 0;
+   top: 0;
+   z-index: 0;
 }
-button:hover {
-   border-color: #646cff;
+
+h1 {
+   /* font-size: clamp(1.5rem, 5vw, 3rem); */
+   font-size: 7vw;
+   font-size: clamp(2rem, 7vw, 7rem);
+   margin: 0 0 1rem;
 }
-button:focus,
-button:focus-visible {
-   outline: 4px auto -webkit-focus-ring-color;
+h2 {
+   font-size: clamp(1.5rem, 4vw, 3.8rem);
+   margin: 0 0 1rem;
+   font-weight: 400;
 }
 
 #info-here {
