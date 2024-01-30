@@ -5,13 +5,13 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ThreeJS Experiments</title>
-  <script type="module" crossorigin src="/threejs-experiments/assets/src/2401-dna/index.html-6e98b193.js"></script>
-  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/three.module-674d1941.js">
-  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/OrbitControls-0fb4b2fb.js">
-  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/World-89dc4da6.js">
-  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/Mouse-5752ff52.js">
+  <script type="module" crossorigin src="/threejs-experiments/assets/src/2401-dna/index.html-dd6a88e3.js"></script>
+  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/three.module-3b5e661e.js">
+  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/OrbitControls-9f56adc0.js">
+  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/World-d201038e.js">
+  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/Mouse-ccb91cf7.js">
   <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/lil-gui.esm-ee8b5e9f.js">
-  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/GLTFLoader-ac453670.js">
+  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/GLTFLoader-4ab4de12.js">
   <link rel="stylesheet" href="/threejs-experiments/assets/style-ea4829e7.css">
 </head>
 
@@ -20,28 +20,74 @@
         z-index: 2;
         position: relative;
         width: 100%;
-        pointer-events: none;
     }
 
     .section {
-        min-height: 90vh;
+        min-height: 100vh;
         width: 100%;
         padding: 300px 5%;
         display: flex;
         flex-direction: column;
         justify-content: center;
     }
+
+    .controls-enabled .page-content {
+        pointer-events: none;
+    }
+
+
+
+    #camera-vectors {
+        position: fixed;
+        font-family: monospace;
+        top: 0;
+        left: 0;
+        background: grey;
+        padding: 8px;
+        color: white;
+        z-index: 2;
+        font-size: 12px;
+    }
+
+    .vectors-table {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        column-gap: 10px;
+    }
+
+    .vectors-table div {
+        font-weight: 600;
+    }
 </style>
 
 <body>
+
+    <!-- 1. create spans for displaying camera position and lookAt vectors -->
+    <div id="camera-vectors">
+        <div><strong>Camera Vectors:</strong></div>
+        <div class="vectors-table">
+            <div>position</div> <span id="position"></span>
+            <div>rotation</div><span id="rotation"></span>
+            <div>direction</div> <span id="direction"></span>
+        </div>
+        <div><strong>particle vectors</strong></div>
+        <div class="vectors-table">
+            <div>position</div><span id="particle-position"></span>
+            <div>rotation</div><span id="particle-rotation"></span>
+        </div>
+    </div>
     <div class="page-content">
         <div class="section">
-            <!-- <h1>It's In Your DNA</h1> -->
+
             <h2>Section 1</h2>
         </div>
 
         <div class="section">
             <h2>Section 2</h2>
+        </div>
+
+        <div class="section">
+            <h2>Section 3</h2>
         </div>
     </div>
 
