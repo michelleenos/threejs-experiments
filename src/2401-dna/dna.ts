@@ -25,6 +25,8 @@ const cameraSpherical = new THREE.Spherical()
 world.renderer.outputColorSpace = THREE.SRGBColorSpace
 world.camera.position.set(0, 5, 0)
 
+// world.scene.add(line)
+
 // world.camera.position.set(-2.29, 0.06, -5.72)
 // world.camera.rotation.set(2.88, -1, 2.92)
 // world.controls.target.set(0.79, 0.56, -3.81)
@@ -33,15 +35,19 @@ cameraSpherical.setFromVector3(world.camera.position)
 
 const baseUrl = import.meta.env.DEV ? '' : import.meta.env.BASE_URL
 const gltfLoader = new GLTFLoader()
-gltfLoader.load(baseUrl + '/scenes/dna/dna-2.glb', (gltf) => {
+gltfLoader.load(baseUrl + '/scenes/dna/dna-2-painted.glb', (gltf) => {
+   console.log(gltf)
+
    let object = gltf.scene?.children?.[0]
    if (!(object instanceof THREE.Mesh)) return
 
    particles = new GeoParticles(object, sizes)
+   console.log(particles)
    particles.cloud.rotateX(Math.PI / 2)
    particles.cloud.rotateZ(Math.PI / 2)
    // particles.cloud.position.set(3, -5, -5)
    world.scene.add(particles.cloud)
+   window.particles = particles
 
    buildGui()
 })
@@ -83,10 +89,18 @@ const buildGui = () => {
    gui.add(particles.material.uniforms.uSize, 'value', 0, 100).name('size')
    gui.add(particles.material.uniforms.uScaleMin, 'value', 0, 10, 0.1).name('scale min')
    gui.add(particles.material.uniforms.uScaleMax, 'value', 0, 10, 0.1).name('scale max')
+   gui.add(particles.material.uniforms.uScaleMiddleMin, 'value', 0, 10, 0.1).name(
+      'scale middle min'
+   )
+   gui.add(particles.material.uniforms.uScaleMiddleMax, 'value', 0, 10, 0.1).name(
+      'scale middle max'
+   )
    gui.add(particles.material.uniforms.uPhiMult, 'value', 0, 10, 0.1).name('phi mult')
    gui.add(particles.material.uniforms.uThetaMult, 'value', 0, 10, 0.1).name('theta mult')
    gui.add(particles.material.uniforms.uNoiseRadius, 'value', 0, 1, 0.01).name('noise radius')
    gui.add(particles.material.uniforms.uSpeed, 'value', 0, 1, 0.01).name('speed')
+   gui.add(particles.material.uniforms.uSquishMain, 'value', 0, 1, 0.001).name('squish main')
+   gui.add(particles.material.uniforms.uSquishMiddle, 'value', 0, 1, 0.001).name('squish middles')
    gui.add(particles, 'count', 0, 100000).name('count')
 
    let cameraFolder = gui.addFolder('camera')
