@@ -3,8 +3,7 @@ uniform float uSize;
 uniform float uScaleMin;
 uniform float uScaleMax;
 uniform float uTime;
-uniform float uPhiMult;
-uniform float uThetaMult;
+uniform float uNoiseResolution;
 uniform float uSpeed;
 uniform float uNoiseRadius;
 uniform float uSquishMain;
@@ -67,8 +66,8 @@ float snoise(vec3 p) {
 }
 
 vec4 adjustedPosition(vec4 pos) {
-   float phi = snoise(pos.xyz * uPhiMult + uTime * uSpeed) * PI * 2.0;
-   float theta = snoise(pos.xyz * uThetaMult - uTime * uSpeed) * PI * 2.0;
+   float phi = snoise(pos.xyz * uNoiseResolution + uTime * uSpeed) * PI * 2.0;
+   float theta = snoise(pos.xyz * uNoiseResolution - uTime * uSpeed) * PI * 2.0;
 
 
    vec3 noise = normal + vec3(sin(phi) * cos(theta), sin(phi) * sin(theta), cos(phi));

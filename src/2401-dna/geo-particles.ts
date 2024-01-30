@@ -6,6 +6,7 @@ import vertexShader from './glsl/vert.glsl'
 import Sizes from '../utils/sizes'
 
 export default class GeoParticles {
+   sizes: Sizes
    meshToSample: THREE.Mesh
    sampler: MeshSurfaceSampler
    cloud: THREE.Points
@@ -17,6 +18,7 @@ export default class GeoParticles {
       this.meshToSample = mesh
       this.sampler = new MeshSurfaceSampler(this.meshToSample).build()
       this._count = count
+      this.sizes = sizes
 
       this.material = new THREE.ShaderMaterial({
          fragmentShader,
@@ -25,18 +27,17 @@ export default class GeoParticles {
          blending: THREE.AdditiveBlending,
          depthWrite: false,
          uniforms: {
-            uPixelRatio: { value: sizes.pixelRatio },
+            uPixelRatio: { value: this.sizes.pixelRatio },
             uSize: { value: 20 },
             uScaleMin: { value: 1 },
             uScaleMax: { value: 5 },
             uScaleMiddleMin: { value: 1 },
             uScaleMiddleMax: { value: 4 },
-            uSpeed: { value: 0.3 },
-            uPhiMult: { value: 3 },
-            uThetaMult: { value: 3 },
-            uNoiseRadius: { value: 0.07 },
-            uSquishMain: { value: 0.127 },
-            uSquishMiddle: { value: 0.015 },
+            uSpeed: { value: 0.1 },
+            uNoiseResolution: { value: 7 },
+            uNoiseRadius: { value: 0.03 },
+            uSquishMain: { value: 0.115 },
+            uSquishMiddle: { value: 0.027 },
             uTime: { value: 0 },
          },
       })
@@ -45,6 +46,12 @@ export default class GeoParticles {
 
       this.cloud = new THREE.Points(this.geometry, this.material)
       this.getPositions()
+
+      this.sizes.on('resize', this.onResize)
+   }
+
+   onResize = () => {
+      this.material.uniforms.uPixelRatio.value = this.sizes.pixelRatio
    }
 
    get count() {

@@ -7,9 +7,9 @@ export default class World {
    renderer: THREE.WebGLRenderer
    camera: THREE.PerspectiveCamera
    sizes: Sizes
-   controls: OrbitControls
+   controls?: OrbitControls
 
-   constructor(sizes: Sizes) {
+   constructor(sizes: Sizes, controls = true) {
       this.sizes = sizes
       this.renderer = new THREE.WebGLRenderer({ antialias: true })
       this.renderer.setClearColor('#000')
@@ -17,8 +17,10 @@ export default class World {
 
       this.scene = new THREE.Scene()
       this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 300)
-      this.controls = new OrbitControls(this.camera, this.renderer.domElement)
-      this.controls.enableDamping = true
+      if (controls) {
+         this.controls = new OrbitControls(this.camera, this.renderer.domElement)
+         this.controls.enableDamping = true
+      }
 
       this.onResize()
       this.sizes.on('resize', this.onResize)
@@ -31,8 +33,10 @@ export default class World {
       this.renderer.setPixelRatio(Math.min(this.sizes.pixelRatio, 2))
    }
 
-   render = () => {
+   render = (time?: number) => {
       this.renderer.render(this.scene, this.camera)
-      if (this.controls.enabled) this.controls.update()
+      if (this.controls && this.controls.enabled) {
+         this.controls.update()
+      }
    }
 }

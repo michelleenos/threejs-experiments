@@ -17,6 +17,9 @@ dependencies:
   cannon-es:
     specifier: ^0.20.0
     version: 0.20.0
+  gsap:
+    specifier: ^3.12.5
+    version: 3.12.5
   lil-gui:
     specifier: ^0.18.1
     version: 0.18.2
@@ -352,6 +355,10 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /gsap@3.12.5:
+    resolution: {integrity: sha512-srBfnk4n+Oe/ZnMIOXt3gT605BX9x5+rh/prT2F1SsNJsU1XuMiP0E2aptW481OnonOGACZWBqseH5Z7csHxhQ==}
+    dev: false
 
   /lil-gui@0.18.2:
     resolution: {integrity: sha512-DgdrLy3/KGC0PiQLKgOcJMPItP4xY4iWgJ9+91Zaxfr8GCTmMps05QS9w9jW7yspILlbscbquwjOwxmWnSx5Uw==}
