@@ -1,3 +1,5 @@
+precision mediump float;
+
 uniform float uPixelRatio;
 uniform float uSize;
 uniform float uScaleMin;
@@ -11,8 +13,15 @@ uniform float uSquishMiddle;
 uniform float uScaleMiddleMin;
 uniform float uScaleMiddleMax;
 
+uniform vec3 uMouse1;
+uniform vec3 uMouse2;
+
 attribute float aScale;
 attribute float aMiddleWeight;
+
+varying float vDistanceToMouse1;
+varying float vDistanceToMouse2;
+varying vec3 vPosition;
 
 #define PI 3.14159265358979323846
 
@@ -94,6 +103,10 @@ void main() {
    scale *= uSize * uPixelRatio;
    scale *= (1.0 / - viewPosition.z);
 
+   vDistanceToMouse1 = distance(uMouse1, modelPosition.xyz);
+    vDistanceToMouse2 = distance(uMouse2, modelPosition.xyz);
+
    gl_Position = projectedPosition;
    gl_PointSize = scale;
+   vPosition = modelPosition.xyz;
 }

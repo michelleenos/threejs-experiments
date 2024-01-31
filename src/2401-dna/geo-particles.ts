@@ -4,21 +4,36 @@ import { MeshSurfaceSampler } from 'three/examples/jsm/Addons.js'
 import fragmentShader from './glsl/frag.glsl'
 import vertexShader from './glsl/vert.glsl'
 import Sizes from '../utils/sizes'
+import Mouse from '../utils/Mouse'
+import World from '../utils/World'
+
+let lastIntersects = [] as THREE.Intersection[]
+document.addEventListener('click', () => {
+   console.log(lastIntersects)
+})
 
 export default class GeoParticles {
    sizes: Sizes
+   mouse: Mouse
+   world: World
    meshToSample: THREE.Mesh
    sampler: MeshSurfaceSampler
    cloud: THREE.Points
    material: THREE.ShaderMaterial
    geometry: THREE.BufferGeometry
+   raycaster: THREE.Raycaster
    _count = 4000
 
-   constructor(mesh: THREE.Mesh, sizes: Sizes, count = 4000) {
+   constructor(mesh: THREE.Mesh, world: World, mouse: Mouse, count = 4000) {
       this.meshToSample = mesh
       this.sampler = new MeshSurfaceSampler(this.meshToSample).build()
       this._count = count
-      this.sizes = sizes
+      this.world = world
+      this.sizes = world.sizes
+      this.mouse = mouse
+
+      this.raycaster = new THREE.Raycaster()
+      this.raycaster.params.Points.threshold = 0.2
 
       this.material = new THREE.ShaderMaterial({
          fragmentShader,
@@ -39,6 +54,8 @@ export default class GeoParticles {
             uSquishMain: { value: 0.115 },
             uSquishMiddle: { value: 0.027 },
             uTime: { value: 0 },
+            uMouse1: { value: new THREE.Vector3() },
+            uMouse2: { value: new THREE.Vector3() },
          },
       })
 
@@ -93,7 +110,33 @@ export default class GeoParticles {
       this.geometry.setAttribute('aMiddleWeight', new THREE.BufferAttribute(middleWeights, 1))
    }
 
+   raycast = () => {
+      this.raycaster.setFromCamera(this.mouse.pos, this.world.camera)
+      const intersects = this.raycaster.intersectObjects([this.cloud], false)
+      if (intersects.length > 0) {
+         let first = intersects[0]
+         let last = intersects.length > 1 ? intersects[intersects.length - 1] : first
+
+         this.material.uniforms.uMouse1.value = first.point
+         this.material.uniforms.uMouse2.value = last.point
+      }
+   }
+
+   projectMouse = () => {
+      let mouseStart = new THREE.Vector3(this.mouse.pos.x, this.mouse.pos.y, 0.5)
+      mouseStart.unproject(this.world.camera)
+      mouseStart.sub(this.world.camera.position).normalize()
+      let targetZ = this.cloud.position.z
+      let distance = (targetZ - this.world.camera.position.z) / mouseStart.z
+      let mousePos = new THREE.Vector3()
+      mousePos.copy(this.world.camera.position).add(mouseStart.multiplyScalar(distance))
+      this.material.uniforms.uMouse1.value = mousePos
+      this.material.uniforms.uMouse2.value = mousePos
+   }
+
    tick = (time: number) => {
+      // this.raycast()
+      this.projectMouse()
       this.material.uniforms.uTime.value = time
    }
 }

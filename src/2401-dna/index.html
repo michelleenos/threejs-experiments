@@ -8,10 +8,15 @@
 </head>
 
 <style>
+    body {
+        display: block !important;
+    }
+
     .page-content {
         z-index: 2;
         position: relative;
         width: 100%;
+
     }
 
     .section {
@@ -67,6 +72,12 @@
             <div>position</div><span id="particle-position"></span>
             <div>rotation</div><span id="particle-rotation"></span>
         </div>
+        <div><strong>mouse vector</strong></div>
+        <div class="vectors-table">
+            <div>posScreen</div><span id="mouse-position"></span>
+            <div>posCloud</div><span id="mouse-cloud-position"></span>
+        </div>
+    </div>
     </div>
     <div class="page-content">
         <div class="section">
