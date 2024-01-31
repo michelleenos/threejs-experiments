@@ -5,21 +5,26 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ThreeJS Experiments</title>
-  <script type="module" crossorigin src="/threejs-experiments/assets/src/2401-dna/index.html-dd6a88e3.js"></script>
-  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/three.module-3b5e661e.js">
-  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/OrbitControls-9f56adc0.js">
-  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/World-d201038e.js">
-  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/Mouse-ccb91cf7.js">
+  <script type="module" crossorigin src="/threejs-experiments/assets/src/2401-dna/index.html-e6b8d5f9.js"></script>
+  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/three.module-d72a404d.js">
+  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/OrbitControls-5b9b3738.js">
+  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/World-3c315daf.js">
+  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/Mouse-208f518b.js">
   <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/lil-gui.esm-ee8b5e9f.js">
-  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/GLTFLoader-4ab4de12.js">
+  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/GLTFLoader-e66ebc76.js">
   <link rel="stylesheet" href="/threejs-experiments/assets/style-ea4829e7.css">
 </head>
 
 <style>
+    body {
+        display: block !important;
+    }
+
     .page-content {
         z-index: 2;
         position: relative;
         width: 100%;
+
     }
 
     .section {
@@ -75,6 +80,12 @@
             <div>position</div><span id="particle-position"></span>
             <div>rotation</div><span id="particle-rotation"></span>
         </div>
+        <div><strong>mouse vector</strong></div>
+        <div class="vectors-table">
+            <div>posScreen</div><span id="mouse-position"></span>
+            <div>posCloud</div><span id="mouse-cloud-position"></span>
+        </div>
+    </div>
     </div>
     <div class="page-content">
         <div class="section">
