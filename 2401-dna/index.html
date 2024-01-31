@@ -5,14 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ThreeJS Experiments</title>
-  <script type="module" crossorigin src="/threejs-experiments/assets/src/2401-dna/index.html-e6b8d5f9.js"></script>
-  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/three.module-d72a404d.js">
-  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/OrbitControls-5b9b3738.js">
-  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/World-3c315daf.js">
-  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/Mouse-208f518b.js">
+  <script type="module" crossorigin src="/threejs-experiments/assets/src/2401-dna/index.html-b3f1b4df.js"></script>
+  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/three.module-34a9c218.js">
   <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/lil-gui.esm-ee8b5e9f.js">
-  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/GLTFLoader-e66ebc76.js">
-  <link rel="stylesheet" href="/threejs-experiments/assets/style-ea4829e7.css">
+  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/OrbitControls-6b0d2589.js">
+  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/World-1929c973.js">
+  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/Mouse-6180fca8.js">
+  <link rel="modulepreload" crossorigin href="/threejs-experiments/assets/GLTFLoader-4fb20633.js">
+  <link rel="stylesheet" href="/threejs-experiments/assets/index-0d252047.css">
+  <link rel="stylesheet" href="/threejs-experiments/assets/style-10e3b1ce.css">
 </head>
 
 <style>
@@ -30,77 +31,88 @@
     .section {
         min-height: 100vh;
         width: 100%;
-        padding: 300px 5%;
+        padding: 100px 5%;
         display: flex;
         flex-direction: column;
         justify-content: center;
+        align-items: flex-start;
+
     }
 
     .controls-enabled .page-content {
         pointer-events: none;
     }
 
-
-
-    #camera-vectors {
-        position: fixed;
-        font-family: monospace;
-        top: 0;
-        left: 0;
-        background: grey;
-        padding: 8px;
-        color: white;
-        z-index: 2;
-        font-size: 12px;
+    .scroll-show {
+        position: absolute;
+        bottom: 40px;
+        left: 50%;
+        transform: translate(-50%, 0);
+        text-align: center;
+        color: #fff;
+        text-transform: uppercase;
+        z-index: 3;
+        padding-bottom: 20px;
     }
 
-    .vectors-table {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        column-gap: 10px;
+    .scroll-show div:nth-child(2):before,
+    .scroll-show div:nth-child(2):after {
+        content: '';
+        width: 20px;
+        height: 20px;
+        border-right: 1px solid #fff;
+        border-bottom: 1px solid #fff;
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        opacity: 0;
+        /* transform: translate(-50%, 0) rotate(45deg); */
+        animation: scrollIcon 1.5s infinite ease-in;
     }
 
-    .vectors-table div {
-        font-weight: 600;
+    @keyframes scrollIcon {
+        0% {
+            transform: translate(-50%, 0) rotate(45deg);
+            opacity: 0;
+        }
+
+        50% {
+            transform: translate(-50%, 11px) rotate(45deg);
+            opacity: 1;
+        }
+
+        100% {
+            transform: translate(-50%, 22px) rotate(45deg);
+            opacity: 0;
+        }
+    }
+
+    .scroll-show div:nth-child(2):after {
+        animation-delay: 0.75s;
     }
 </style>
 
 <body>
 
-    <!-- 1. create spans for displaying camera position and lookAt vectors -->
-    <div id="camera-vectors">
-        <div><strong>Camera Vectors:</strong></div>
-        <div class="vectors-table">
-            <div>position</div> <span id="position"></span>
-            <div>rotation</div><span id="rotation"></span>
-            <div>direction</div> <span id="direction"></span>
-        </div>
-        <div><strong>particle vectors</strong></div>
-        <div class="vectors-table">
-            <div>position</div><span id="particle-position"></span>
-            <div>rotation</div><span id="particle-rotation"></span>
-        </div>
-        <div><strong>mouse vector</strong></div>
-        <div class="vectors-table">
-            <div>posScreen</div><span id="mouse-position"></span>
-            <div>posCloud</div><span id="mouse-cloud-position"></span>
-        </div>
-    </div>
+    <div class="scroll-show">
+        <div>scroll</div>
+        <div></div>
     </div>
     <div class="page-content">
-        <div class="section">
-
-            <h2>Section 1</h2>
+        <div class="section" style="height: 150vh;">
+            <h2>DNA Particles</h2>
         </div>
 
-        <div class="section">
+        <div class="section" style="height: 120vh">
             <h2>Section 2</h2>
         </div>
+
 
         <div class="section">
             <h2>Section 3</h2>
         </div>
     </div>
+
 
     
 </body>
