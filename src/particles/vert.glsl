@@ -72,61 +72,64 @@ float snoise(vec3 p) {
 }
 
 float map(float value, float min1, float max1, float min2, float max2) {
-	return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+  return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
 }
 
 void main() {
-	vec3 pos = position;
+  vec3 pos = position;
 
-	vec2 uv = (pos.xz + u_res.xz / 2.0) / u_res.xz;
-	vec2 mouse = (u_mouse.xz + u_res.xz / 2.0) / u_res.xz;
+  vec2 uv = (pos.xz + u_res.xz / 2.0) / u_res.xz;
+  vec2 mouse = (u_mouse.xz + u_res.xz / 2.0) / u_res.xz;
 
-	float dist = distance( uv, mouse );
-	v_dist = dist;
-	v_toPointsCenter = distance( uv, vec2(0.5, 0.5) );
+  float dist = distance(uv, mouse);
+  v_dist = dist;
+  v_toPointsCenter = distance(uv, vec2(0.5, 0.5));
 
-	float angle = atan( uv.y - mouse.y, uv.x - mouse.x ) + PI;
+  float angle = atan(uv.y - mouse.y, uv.x - mouse.x) + PI;
 
   /**
    * Push & Pull
    */
-	float noise = snoise(vec3(uv.y * u_noiseVal, uv.x * u_noiseVal, u_time * u_noiseSpeed));
-	
+  float noise =
+      snoise(vec3(uv.y * u_noiseVal, uv.x * u_noiseVal, u_time * u_noiseSpeed));
+
   // original vals (don't delete this)
-	// float edge = map(noise, -1.0, 1.0, 0.85, 0.9);
+  // float edge = map(noise, -1.0, 1.0, 0.85, 0.9);
   // float push = smoothstep(edge, 1.0, 1.0 - dist) * 0.1;
 
   float push_end = 1.0 - u_innerSize;
   float push_start = push_end - 0.05;
 
   float edge = map(noise, -1.0, 1.0, push_start, push_end);
-	float push = smoothstep(edge, 1.0, 1.0 - dist) * u_innerSize;
+  float push = smoothstep(edge, 1.0, 1.0 - dist) * u_innerSize;
 
-	float pull = smoothstep(u_pullFrom, 1.0, dist);
-	pull *= exp(pull);
+  float pull = smoothstep(u_pullFrom, 1.0, dist);
+  pull *= exp(pull);
 
   /**
    * Waves
    */
-	float adjust_y = sin(u_time * u_waveSpeed + dist * u_waveA + cos(dist * u_waveB)) * u_waveStrength * dist;
-	float adjust_y_amt = smoothstep(1.0, 0.3, dist);
-	adjust_y *= max(u_strength, 0.7);
-	pos.y -= adjust_y * adjust_y_amt;
+  float adjust_y =
+      sin(u_time * u_waveSpeed + dist * u_waveA + cos(dist * u_waveB)) *
+      u_waveStrength * dist;
+  float adjust_y_amt = smoothstep(1.0, 0.3, dist);
+  adjust_y *= max(u_strength, 0.7);
+  pos.y -= adjust_y * adjust_y_amt;
 
   /**
    * Apply
    */
-	uv.x -= cos(angle) * push;
-	uv.y -= sin(angle) * push;
-	uv.x += cos(angle) * (pull * u_pullAmount);
-	uv.y += sin(angle) * (pull * u_pullAmount);
-	
+  uv.x -= cos(angle) * push;
+  uv.y -= sin(angle) * push;
+  uv.x += cos(angle) * (pull * u_pullAmount);
+  uv.y += sin(angle) * (pull * u_pullAmount);
+
   // convert uv.xy back to pos.xz
-	pos.x = uv.x * u_res.xz.x - u_res.xz.x / 2.0;
-	pos.z = uv.y * u_res.xz.y - u_res.xz.y / 2.0;
+  pos.x = uv.x * u_res.xz.x - u_res.xz.x / 2.0;
+  pos.z = uv.y * u_res.xz.y - u_res.xz.y / 2.0;
 
-	vec4 mvPosition = modelViewMatrix * vec4( pos, 1.0 );
-	gl_PointSize =  scale * ( 300.0 / -mvPosition.z );
+  vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+  gl_PointSize = scale * (300.0 / -mvPosition.z);
 
-	gl_Position = projectionMatrix * mvPosition;
+  gl_Position = projectionMatrix * mvPosition;
 }

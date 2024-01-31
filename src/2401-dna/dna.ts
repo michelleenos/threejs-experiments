@@ -1,13 +1,14 @@
-import '../style.css'
+import { GUI } from 'lil-gui'
 import * as THREE from 'three'
-import { GLTFLoader, OrbitControls } from 'three/examples/jsm/Addons.js'
+import { FlyControls, GLTFLoader } from 'three/examples/jsm/Addons.js'
+import '../style.css'
+import Mouse from '../utils/Mouse'
 import World from '../utils/World'
+import { DataView } from '../utils/data-view'
+import { createElement } from '../utils/dom'
 import Sizes from '../utils/sizes'
 import GeoParticles from './geo-particles'
-import Mouse from '../utils/Mouse'
-import { GUI } from 'lil-gui'
 import { buildGui } from './gui'
-import { FlyControls } from 'three/examples/jsm/Addons.js'
 import { DNAScroll } from './scroll-positions'
 
 let particles: GeoParticles
@@ -16,19 +17,15 @@ const sizes = new Sizes()
 const world = new World(sizes, false)
 const mouse = new Mouse(sizes)
 const clock = new THREE.Clock()
-const gui = new GUI()
-let timelines: gsap.core.Timeline[]
+const gui = new GUI().close()
+let scroller: DNAScroll
 
 const controls = new FlyControls(world.camera, world.renderer.domElement)
-
-const camPositionEl = document.getElementById('position')!
-const camRotationEl = document.getElementById('rotation')!
-const camDirectionEl = document.getElementById('direction')!
-const pPositionEl = document.getElementById('particle-position')!
-const pRotationEl = document.getElementById('particle-rotation')!
-const mousePosEl = document.getElementById('mouse-position')!
-const mouseCloudEl = document.getElementById('mouse-cloud-position')!
-// window.controls = controls
+const data = new DataView()
+data.hide()
+let cameraDataObj = {
+   direction: new THREE.Vector3(),
+}
 
 controls.movementSpeed = 10
 controls.dragToLook = true
@@ -37,20 +34,13 @@ controls.rollSpeed = Math.PI / 4
 
 world.renderer.outputColorSpace = THREE.SRGBColorSpace
 
-world.camera.position.set(1.86, 1.11, 1.07)
-world.camera.rotation.set(-0.98, 0.49, 0.61)
-
-const axes = new THREE.AxesHelper(10)
-axes.setColors('blue', 'red', 'green')
-world.scene.add(axes)
-
 const baseUrl = import.meta.env.DEV ? '' : import.meta.env.BASE_URL
 const gltfLoader = new GLTFLoader()
 gltfLoader.load(baseUrl + '/scenes/dna/dna-2-painted.glb', (gltf) => {
    let object = gltf.scene?.children?.[0]
    if (!(object instanceof THREE.Mesh)) return
 
-   particles = new GeoParticles(object, world, mouse, 8000)
+   particles = new GeoParticles(object, world, mouse)
    afterLoad()
 })
 
@@ -59,54 +49,83 @@ const afterLoad = () => {
    particles.cloud.rotateZ(Math.PI / 2)
    world.scene.add(particles.cloud)
 
-   // const sections = [...document.querySelectorAll<HTMLElement>('.section')]
+   controls.addEventListener('change', () => {
+      particles.onResize()
+   })
+
    const container = document.querySelector<HTMLElement>('.page-content')!
-   // timelines = scrollAnimations(container, world, particles)
-   // new DNAScroll(container, world, particles)
-   buildGui(gui, world, particles, controls)
+   scroller = new DNAScroll(container, world, particles)
+
+   const cameraData = data.createSection('camera')
+   cameraData.add(world.camera, 'position')
+   cameraData.add(world.camera, 'rotation')
+   cameraData.add(cameraDataObj, 'direction')
+
+   let particlesData = data.createSection('particles')
+   particlesData.add(particles.cloud, 'position')
+   particlesData.add(particles.cloud, 'rotation')
+
+   // let mouseData = data.createSection('mouse')
+   // mouseData.add(mouse, 'screenPos')
+   // mouseData.add(particles.material.uniforms.uMouse1, 'value', 'cloudPos')
+   // mouseData.add(particles, 'intersectionCount', 'intersects')
+
+   buildGui(gui, world, particles, controls, scroller)
+   scrollTableDataView()
 }
 
-const camDirection = new THREE.Vector3()
-
-const writeNum = (num: number) => num.toFixed(2).padStart(7, '\xa0')
-const writeVector = (vec: THREE.Vector3 | THREE.Vector2 | THREE.Euler) => {
-   if (vec instanceof THREE.Vector2) {
-      return `${writeNum(vec.x)} ${writeNum(vec.y)}`
-   } else {
-      return `${writeNum(vec.x)} ${writeNum(vec.y)} ${writeNum(vec.z)}`
+const scrollTableDataView = () => {
+   const createRow = (i: number) => {
+      return createElement('tr', { id: `scroll-${i}` }, [
+         createElement('th', {}, i.toString()),
+         createElement('td', { class: 'pos' }),
+         createElement('td', { class: 'duration' }),
+         createElement('td', { class: 'offset' }),
+      ])
    }
+
+   const rows = [createRow(0), createRow(1), createRow(2)]
+   const table = createElement('table', {}, [
+      createElement('tr', {}, [
+         createElement('td'),
+         createElement('th', {}, 'position'),
+         createElement('th', {}, 'duration'),
+         createElement('th', {}, 'offset'),
+      ]),
+      ...rows,
+   ])
+
+   const writeScrollRow = (row: HTMLElement, i: number) => {
+      let pos = row.querySelector('.pos')!
+      let duration = row.querySelector('.duration')!
+      let offset = row.querySelector('.offset')!
+      pos.innerHTML = scroller.sections[i].position.toFixed(2)
+      duration.innerHTML = scroller.sections[i].duration.toFixed(2)
+      offset.innerHTML = scroller.sections[i].offset.toFixed(2)
+   }
+
+   const onUpdate = () => {
+      rows.forEach((row, i) => writeScrollRow(row, i))
+   }
+
+   data.createCustomSection(table, onUpdate, 'scroll positions')
 }
 
-const cube = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshNormalMaterial())
-cube.scale.set(0.1, 0.1, 0.1)
-world.scene.add(cube)
 const animate = () => {
    const delta = clock.getDelta()
    const time = clock.getElapsedTime()
 
-   if (particles) {
-      particles.tick(time)
-      pPositionEl.innerHTML = writeVector(particles.cloud.position)
-      pRotationEl.innerHTML = writeVector(particles.cloud.rotation)
-   }
-
-   // orbitControls.update()
+   if (particles) particles.tick(time)
    controls.update(delta)
-   world.camera.getWorldDirection(camDirection)
-   camDirection.multiplyScalar(100)
+   world.camera.getWorldDirection(cameraDataObj.direction)
 
-   camPositionEl.innerHTML = writeVector(world.camera.position)
-   camRotationEl.innerHTML = writeVector(world.camera.rotation)
-   camDirectionEl.innerHTML = writeVector(camDirection)
-
-   mousePosEl.innerHTML = writeVector(mouse.pos)
-   if (particles) {
-      mouseCloudEl.innerHTML = writeVector(particles.material.uniforms.uMouse1.value)
-      cube.position.copy(particles.material.uniforms.uMouse1.value)
-   }
+   data.update()
 
    world.render()
+
    window.requestAnimationFrame(animate)
 }
 
 window.requestAnimationFrame(animate)
+
+window.world = world

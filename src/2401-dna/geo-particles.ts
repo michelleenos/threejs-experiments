@@ -22,9 +22,12 @@ export default class GeoParticles {
    material: THREE.ShaderMaterial
    geometry: THREE.BufferGeometry
    raycaster: THREE.Raycaster
-   _count = 4000
+   intersectionCount: number = 0
+   testMesh: THREE.Mesh
+   testMeshVisible: boolean = false
+   _count: number
 
-   constructor(mesh: THREE.Mesh, world: World, mouse: Mouse, count = 4000) {
+   constructor(mesh: THREE.Mesh, world: World, mouse: Mouse, count = 28000) {
       this.meshToSample = mesh
       this.sampler = new MeshSurfaceSampler(this.meshToSample).build()
       this._count = count
@@ -33,7 +36,7 @@ export default class GeoParticles {
       this.mouse = mouse
 
       this.raycaster = new THREE.Raycaster()
-      this.raycaster.params.Points.threshold = 0.2
+      this.raycaster.params.Points.threshold = 0.6
 
       this.material = new THREE.ShaderMaterial({
          fragmentShader,
@@ -43,22 +46,66 @@ export default class GeoParticles {
          depthWrite: false,
          uniforms: {
             uPixelRatio: { value: this.sizes.pixelRatio },
-            uSize: { value: 20 },
-            uScaleMin: { value: 1 },
+            uSize: { value: 7 },
+            uScaleMin: { value: 2 },
             uScaleMax: { value: 5 },
-            uScaleMiddleMin: { value: 1 },
-            uScaleMiddleMax: { value: 4 },
+            uScaleMiddleMin: { value: 2 },
+            uScaleMiddleMax: { value: 5 },
             uSpeed: { value: 0.1 },
             uNoiseResolution: { value: 7 },
             uNoiseRadius: { value: 0.03 },
             uSquishMain: { value: 0.115 },
             uSquishMiddle: { value: 0.027 },
             uTime: { value: 0 },
+            uMouseScreen: { value: new THREE.Vector2() },
             uMouse1: { value: new THREE.Vector3() },
             uMouse2: { value: new THREE.Vector3() },
+            uMouse3: { value: new THREE.Vector3() },
+            uCamSizes: { value: new THREE.Vector2() },
+            uResolution: { value: new THREE.Vector2(this.sizes.width, this.sizes.height) },
          },
       })
 
+      this.testMesh = new THREE.Mesh(
+         new THREE.BoxGeometry(1, 1, 1),
+         new THREE.ShaderMaterial({
+            fragmentShader: fragmentShader,
+            vertexShader: `
+               precision mediump float;
+               uniform vec2 uResolution;
+               varying vec4 vProjection;
+               varying vec4 vFakeFragCoord;
+               varying vec4 vViewPosition;
+               varying vec2 vUv;
+               void main() {
+                  vUv = uv;
+                  vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+                  vec4 viewPosition = viewMatrix * modelPosition;
+                  vec4 projectedPosition = projectionMatrix * viewPosition;
+
+                  vec4 fakeFragCoord = projectedPosition;
+                  fakeFragCoord.xyz /= fakeFragCoord.w;
+                  fakeFragCoord.w = 1.0 / fakeFragCoord.w;
+                  fakeFragCoord.xyz *= vec3(0.5);
+                  fakeFragCoord.xyz += vec3(0.5);
+                  fakeFragCoord.xy *= uResolution;
+
+                  vFakeFragCoord = fakeFragCoord;
+                  vViewPosition = viewPosition;
+
+                  gl_Position = projectedPosition;
+                  vProjection = projectedPosition;
+               }
+            `,
+            uniforms: this.material.uniforms,
+         })
+      )
+      this.world.scene.add(this.testMesh)
+      this.testMesh.scale.x = 8
+      this.testMesh.scale.y = 8
+      this.testMesh.visible = this.testMeshVisible
+
+      this.onResize()
       this.geometry = new THREE.BufferGeometry()
 
       this.cloud = new THREE.Points(this.geometry, this.material)
@@ -69,6 +116,23 @@ export default class GeoParticles {
 
    onResize = () => {
       this.material.uniforms.uPixelRatio.value = this.sizes.pixelRatio
+      this.material.uniforms.uResolution.value = new THREE.Vector2(
+         this.sizes.width,
+         this.sizes.height
+      )
+
+      const vFov = (this.world.camera.fov * Math.PI) / 180
+      const height = 2 * Math.tan(vFov / 2) * this.world.camera.position.z
+      const width = height * this.world.camera.aspect
+      this.material.uniforms.uCamSizes.value.set(width, height)
+   }
+
+   set threshold(val: number) {
+      this.raycaster.params.Points.threshold = val
+   }
+
+   get threshold() {
+      return this.raycaster.params.Points.threshold
    }
 
    get count() {
@@ -116,27 +180,17 @@ export default class GeoParticles {
       if (intersects.length > 0) {
          let first = intersects[0]
          let last = intersects.length > 1 ? intersects[intersects.length - 1] : first
-
+         let mid = intersects[Math.floor(intersects.length / 2)]
+         this.intersectionCount = intersects.length
          this.material.uniforms.uMouse1.value = first.point
          this.material.uniforms.uMouse2.value = last.point
+         this.material.uniforms.uMouse3.value = mid.point
       }
    }
 
-   projectMouse = () => {
-      let mouseStart = new THREE.Vector3(this.mouse.pos.x, this.mouse.pos.y, 0.5)
-      mouseStart.unproject(this.world.camera)
-      mouseStart.sub(this.world.camera.position).normalize()
-      let targetZ = this.cloud.position.z
-      let distance = (targetZ - this.world.camera.position.z) / mouseStart.z
-      let mousePos = new THREE.Vector3()
-      mousePos.copy(this.world.camera.position).add(mouseStart.multiplyScalar(distance))
-      this.material.uniforms.uMouse1.value = mousePos
-      this.material.uniforms.uMouse2.value = mousePos
-   }
-
    tick = (time: number) => {
-      // this.raycast()
-      this.projectMouse()
+      this.raycast()
+      this.material.uniforms.uMouseScreen.value = this.mouse.pos
       this.material.uniforms.uTime.value = time
    }
 }

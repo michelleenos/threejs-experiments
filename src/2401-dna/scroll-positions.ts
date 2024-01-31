@@ -3,6 +3,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import World from '../utils/World'
 import GeoParticles from './geo-particles'
 import * as THREE from 'three'
+import Sizes from '../utils/sizes'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -18,8 +19,8 @@ const cameraSettings: { position: THREE.Vector3; rotation: THREE.Euler; target?:
          rotation: new THREE.Euler(-1.58, -1.1, -0.16),
       },
       {
-         position: new THREE.Vector3(0.17, -1.22, -6.3),
-         rotation: new THREE.Euler(-2.88, -0.08, -1.68),
+         position: new THREE.Vector3(-0.6, 2.28, -5.27),
+         rotation: new THREE.Euler(-2.57, -0.09, -1.43),
       },
    ]
 
@@ -32,68 +33,11 @@ const particleSettings: { position: THREE.Vector3; rotation: THREE.Euler }[] = [
       position: new THREE.Vector3(0, 0, 0),
       rotation: new THREE.Euler(Math.PI * 3, 0, Math.PI / 2),
    },
-   // {
-   //    position: new THREE.Vector3(0, 0, 0),
-   //    rotation: new THREE.Euler(0, 0, 0),
-   // },
+   {
+      position: new THREE.Vector3(0, 0, 0),
+      rotation: new THREE.Euler(Math.PI * 3, 0, Math.PI / 2),
+   },
 ]
-
-export const scrollAnimations = (container: HTMLElement, world: World, particles: GeoParticles) => {
-   let timelines: gsap.core.Timeline[] = []
-
-   const sections = container.querySelectorAll<HTMLElement>('.section')
-
-   gsap
-      .timeline({
-         scrollTrigger: {
-            trigger: sections[0],
-         },
-      })
-      .to(world.camera.position, {
-         x: cameraSettings[1].position.x,
-         y: cameraSettings[1].position.y,
-         z: cameraSettings[1].position.z,
-      })
-      .to(
-         world.camera.rotation,
-         {
-            x: cameraSettings[1].rotation.x,
-            y: cameraSettings[1].rotation.y,
-            z: cameraSettings[1].rotation.z,
-         },
-         '<'
-      )
-      .to(
-         particles.cloud.rotation,
-         {
-            x: particleSettings[1].rotation.x,
-         },
-         '<'
-      )
-
-   gsap
-      .timeline({
-         scrollTrigger: {
-            trigger: sections[1],
-         },
-      })
-      .to(world.camera.position, {
-         x: cameraSettings[2].position.x,
-         y: cameraSettings[2].position.y,
-         z: cameraSettings[2].position.z,
-      })
-      .to(
-         world.camera.rotation,
-         {
-            x: cameraSettings[2].rotation.x,
-            y: cameraSettings[2].rotation.y,
-            z: cameraSettings[2].rotation.z,
-         },
-         '<'
-      )
-
-   return timelines
-}
 
 export class DNAScroll {
    el: HTMLElement
@@ -106,12 +50,14 @@ export class DNAScroll {
    }[]
    totalHeight: number = 0
    world: World
+   sizes: Sizes
    particles: GeoParticles
    timeline!: gsap.core.Timeline
 
    constructor(container: HTMLElement, world: World, particles: GeoParticles) {
       this.el = container
       this.world = world
+      this.sizes = world.sizes
       this.particles = particles
 
       this.sections = [...this.el.querySelectorAll<HTMLElement>('.section')].map((el) => ({
@@ -123,29 +69,49 @@ export class DNAScroll {
       }))
 
       this.getSizes()
+      this.sizes.on('scroller/resize', this.onResize)
+      this.setTimeline()
+   }
+
+   onResize = () => {
+      this.getSizes()
+      this.timeline.kill()
       this.setTimeline()
    }
 
    getSizes = () => {
-      this.totalHeight = this.el.getBoundingClientRect().height
+      let rect = this.el.getBoundingClientRect()
+      this.totalHeight = rect.height
       let offset = 0
       this.sections.forEach((section) => {
          section.offset = offset
          section.position = offset / this.totalHeight
-         section.height = section.el.getBoundingClientRect().height
+         let rect = section.el.getBoundingClientRect()
+
+         section.height = rect.height
          section.duration = section.height / this.totalHeight
-         offset += section.height
+
+         offset += section.height + section.el.offsetTop
       })
    }
 
    setTimeline = () => {
+      gsap.set(this.world.camera.position, {
+         x: cameraSettings[0].position.x,
+         y: cameraSettings[0].position.y,
+         z: cameraSettings[0].position.z,
+      })
+      gsap.set(this.world.camera.rotation, {
+         x: cameraSettings[0].rotation.x,
+         y: cameraSettings[0].rotation.y,
+         z: cameraSettings[0].rotation.z,
+      })
       this.timeline = gsap.timeline({
          scrollTrigger: {
             trigger: this.el,
             start: 'top top',
             end: 'bottom bottom',
             scrub: 1,
-            markers: true,
             immediateRender: false,
          },
       })
@@ -155,7 +121,7 @@ export class DNAScroll {
             .to(
                this.world.camera.position,
                {
-                  duration: this.sections[i].duration,
+                  duration: this.sections[i - 1].duration,
                   x: cameraSettings[i].position.x,
                   y: cameraSettings[i].position.y,
                   z: cameraSettings[i].position.z,
@@ -165,7 +131,7 @@ export class DNAScroll {
             .to(
                this.world.camera.rotation,
                {
-                  duration: this.sections[i].duration,
+                  duration: this.sections[i - 1].duration,
                   x: cameraSettings[i].rotation.x,
                   y: cameraSettings[i].rotation.y,
                   z: cameraSettings[i].rotation.z,
@@ -176,12 +142,17 @@ export class DNAScroll {
             this.timeline.to(
                this.particles.cloud.rotation,
                {
-                  duration: this.sections[i].duration,
+                  duration: this.sections[i - 1].duration,
                   x: particleSettings[i].rotation.x,
                },
                '<'
             )
          }
       }
+   }
+
+   destroy = () => {
+      this.sizes.off('scroller/resize')
+      this.timeline.kill()
    }
 }
