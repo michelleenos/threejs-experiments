@@ -23,7 +23,6 @@ export default class GeoParticles {
    geometry: THREE.BufferGeometry
    raycaster: THREE.Raycaster
    intersectionCount: number = 0
-   testMesh: THREE.Mesh
    testMeshVisible: boolean = false
    _count: number
 
@@ -47,10 +46,8 @@ export default class GeoParticles {
          uniforms: {
             uPixelRatio: { value: this.sizes.pixelRatio },
             uSize: { value: 7 },
-            uScaleMin: { value: 2 },
-            uScaleMax: { value: 5 },
-            uScaleMiddleMin: { value: 2 },
-            uScaleMiddleMax: { value: 5 },
+            uScaleMain: { value: 5 },
+            uScaleMiddle: { value: 5 },
             uSpeed: { value: 0.1 },
             uNoiseResolution: { value: 7 },
             uNoiseRadius: { value: 0.03 },
@@ -62,48 +59,10 @@ export default class GeoParticles {
             uMouse2: { value: new THREE.Vector3() },
             uMouse3: { value: new THREE.Vector3() },
             uCamSizes: { value: new THREE.Vector2() },
+            uDoMouseDistort: { value: false },
             uResolution: { value: new THREE.Vector2(this.sizes.width, this.sizes.height) },
          },
       })
-
-      this.testMesh = new THREE.Mesh(
-         new THREE.BoxGeometry(1, 1, 1),
-         new THREE.ShaderMaterial({
-            fragmentShader: fragmentShader,
-            vertexShader: `
-               precision mediump float;
-               uniform vec2 uResolution;
-               varying vec4 vProjection;
-               varying vec4 vFakeFragCoord;
-               varying vec4 vViewPosition;
-               varying vec2 vUv;
-               void main() {
-                  vUv = uv;
-                  vec4 modelPosition = modelMatrix * vec4(position, 1.0);
-                  vec4 viewPosition = viewMatrix * modelPosition;
-                  vec4 projectedPosition = projectionMatrix * viewPosition;
-
-                  vec4 fakeFragCoord = projectedPosition;
-                  fakeFragCoord.xyz /= fakeFragCoord.w;
-                  fakeFragCoord.w = 1.0 / fakeFragCoord.w;
-                  fakeFragCoord.xyz *= vec3(0.5);
-                  fakeFragCoord.xyz += vec3(0.5);
-                  fakeFragCoord.xy *= uResolution;
-
-                  vFakeFragCoord = fakeFragCoord;
-                  vViewPosition = viewPosition;
-
-                  gl_Position = projectedPosition;
-                  vProjection = projectedPosition;
-               }
-            `,
-            uniforms: this.material.uniforms,
-         })
-      )
-      this.world.scene.add(this.testMesh)
-      this.testMesh.scale.x = 8
-      this.testMesh.scale.y = 8
-      this.testMesh.visible = this.testMeshVisible
 
       this.onResize()
       this.geometry = new THREE.BufferGeometry()

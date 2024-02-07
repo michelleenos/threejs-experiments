@@ -91,12 +91,14 @@ export class DataView {
       this.toggle.innerHTML = 'hide data'
       this.el.classList.remove('hidden')
       this._visible = true
+      return this
    }
 
    hide = () => {
       this.toggle.innerHTML = 'show data'
       this.el.classList.add('hidden')
       this._visible = false
+      return this
    }
 
    onToggle = () => {
