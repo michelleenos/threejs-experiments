@@ -101,6 +101,7 @@ export const buildGui = (
       .add(particles.material.uniforms.uSquishMiddle, 'value', 0, 0.3, 0.001)
       .name('squish middles')
    fShader.add(particles.material.uniforms.uDoMouseDistort, 'value', 0, 1, 1).name('mouse distort')
+   fShader.add(particles.material.uniforms.uMove, 'value', -3, 3, 0.1).name('move')
 
    let fParticles = gui.addFolder('particles').close()
    fParticles

@@ -23,7 +23,6 @@ export default class GeoParticles {
    geometry: THREE.BufferGeometry
    raycaster: THREE.Raycaster
    intersectionCount: number = 0
-   testMeshVisible: boolean = false
    _count: number
 
    constructor(mesh: THREE.Mesh, world: World, mouse: Mouse, count = 28000) {
@@ -41,7 +40,7 @@ export default class GeoParticles {
          fragmentShader,
          vertexShader,
          transparent: true,
-         blending: THREE.AdditiveBlending,
+         // blending: THREE.AdditiveBlending,
          depthWrite: false,
          uniforms: {
             uPixelRatio: { value: this.sizes.pixelRatio },
@@ -58,11 +57,36 @@ export default class GeoParticles {
             uMouse1: { value: new THREE.Vector3() },
             uMouse2: { value: new THREE.Vector3() },
             uMouse3: { value: new THREE.Vector3() },
-            uCamSizes: { value: new THREE.Vector2() },
+            uCamSize: { value: new THREE.Vector2() },
             uDoMouseDistort: { value: false },
+            uMove: { value: 1 },
             uResolution: { value: new THREE.Vector2(this.sizes.width, this.sizes.height) },
          },
       })
+
+      // this.testMesh = new THREE.Mesh(
+      //    new THREE.BoxGeometry(1, 1, 1),
+      //    new THREE.ShaderMaterial({
+      //       fragmentShader: fragmentShader,
+      //       vertexShader: `
+      //          precision mediump float;
+      //          uniform vec2 uResolution;
+      //          varying vec4 vProjectedPosition;
+      //          void main() {
+      //             vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+      //             vec4 viewPosition = viewMatrix * modelPosition;
+      //             vec4 projectedPosition = projectionMatrix * viewPosition;
+      //             vProjectedPosition = projectedPosition;
+
+      //             gl_Position = projectedPosition;
+      //          }
+      //       `,
+      //       uniforms: this.material.uniforms,
+      //    })
+      // )
+      // this.world.scene.add(this.testMesh)
+      // this.testMesh.scale.x = 8
+      // this.testMesh.scale.y = 8
 
       this.onResize()
       this.geometry = new THREE.BufferGeometry()
@@ -83,7 +107,9 @@ export default class GeoParticles {
       const vFov = (this.world.camera.fov * Math.PI) / 180
       const height = 2 * Math.tan(vFov / 2) * this.world.camera.position.z
       const width = height * this.world.camera.aspect
-      this.material.uniforms.uCamSizes.value.set(width, height)
+      console.log({ height, width })
+      this.material.uniforms.uCamSize.value.x = Math.abs(width)
+      this.material.uniforms.uCamSize.value.y = Math.abs(height)
    }
 
    set threshold(val: number) {

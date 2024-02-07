@@ -16,6 +16,8 @@ let scroller: DNAScroll
 const sizes = new Sizes()
 const world = new World(sizes, false)
 world.renderer.outputColorSpace = THREE.SRGBColorSpace
+window.world = world
+
 const mouse = new Mouse(sizes)
 const clock = new THREE.Clock()
 
@@ -45,6 +47,7 @@ const afterLoad = () => {
 
    const container = document.querySelector<HTMLElement>('.page-content')!
    scroller = new DNAScroll(container, world, particles)
+   particles.onResize()
 
    buildGui(gui, world, particles, controls, scroller)
    makeDataView(data, world, particles, scroller)
