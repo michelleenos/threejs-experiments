@@ -1,4 +1,4 @@
-var _=Object.defineProperty;var b=(n,e,o)=>e in n?_(n,e,{enumerable:!0,configurable:!0,writable:!0,value:o}):n[e]=o;var t=(n,e,o)=>(b(n,typeof e!="symbol"?e+"":e,o),o);import{a1 as M,B as T,i as p,S as h,j as L,h as E,_ as y,k as G,a0 as z,f as x,b as u,K as A,$ as B}from"../../three.module-3b5e661e.js";/* empty css                  */import{S as R,W as F}from"../../World-d201038e.js";import{a as j}from"../../lil-gui.esm-ee8b5e9f.js";import{G as k}from"../../GLTFLoader-4ab4de12.js";import"../../OrbitControls-9f56adc0.js";var I=`varying vec2 vUv;
+var _=Object.defineProperty;var b=(n,e,o)=>e in n?_(n,e,{enumerable:!0,configurable:!0,writable:!0,value:o}):n[e]=o;var t=(n,e,o)=>(b(n,typeof e!="symbol"?e+"":e,o),o);import{a1 as M,B as T,i as p,S as h,j as L,h as E,_ as y,k as G,a0 as z,f as x,b as u,K as A,$ as B}from"../../three.module-26cbe395.js";/* empty css                  */import{S as R,W as F}from"../../World-13c8b4f6.js";import{a as j}from"../../lil-gui.esm-ee8b5e9f.js";import{G as k}from"../../GLTFLoader-1d991fde.js";import"../../OrbitControls-1db9ef1b.js";var I=`varying vec2 vUv;
 
 void main()
 {
