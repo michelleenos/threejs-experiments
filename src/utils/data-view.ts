@@ -3,7 +3,7 @@ import { createElement } from './dom'
 
 import './style-data.css'
 
-type DataViewValue = THREE.Vector3 | THREE.Vector2 | THREE.Euler | Number
+type DataViewValue = THREE.Vector3 | THREE.Vector2 | THREE.Euler | number
 const isDataViewValue = (val: any): val is DataViewValue => {
    return (
       val instanceof THREE.Vector2 ||
@@ -13,14 +13,14 @@ const isDataViewValue = (val: any): val is DataViewValue => {
    )
 }
 
-const writeNum = (num: number) => num.toFixed(2).padStart(7, '\xa0')
-const writeVal = (val: DataViewValue) => {
+const writeNum = (num: number, dec = 2) => num.toFixed(dec).padStart(7, '\xa0')
+const writeVal = (val: DataViewValue, dec = 2) => {
    if (val instanceof THREE.Vector2) {
-      return `${writeNum(val.x)} ${writeNum(val.y)}`
+      return `${writeNum(val.x, dec)} ${writeNum(val.y, dec)}`
    } else if (val instanceof THREE.Vector3 || val instanceof THREE.Euler) {
-      return `${writeNum(val.x)} ${writeNum(val.y)} ${writeNum(val.z)}`
+      return `${writeNum(val.x, dec)} ${writeNum(val.y, dec)} ${writeNum(val.z, dec)}`
    } else {
-      return val.toFixed(2).padStart(7, '\xa0')
+      return writeNum(val, dec)
    }
 }
 
@@ -29,6 +29,7 @@ interface DataViewItem {
    titleEl: HTMLElement
    object: { [key: string | number]: any }
    key: string | number
+   decimals?: number
 }
 
 class DataViewSection {
@@ -50,7 +51,7 @@ class DataViewSection {
       this.el.appendChild(this.dataEl)
    }
 
-   add = (object: any, key: string, name: string = key) => {
+   add = (object: any, key: string, name = key, decimals = 2) => {
       let value = object[key]
       if (!isDataViewValue(value)) {
          console.warn(`DataView: value for ${key} is not a vector or number`)
@@ -59,12 +60,12 @@ class DataViewSection {
       let titleEl = createElement('div', {}, name)
       let valueEl = createElement('div', {}, writeVal(value))
       this.dataEl.append(titleEl, valueEl)
-      this.values.push({ el: valueEl, titleEl, object, key })
+      this.values.push({ el: valueEl, titleEl, object, key, decimals })
    }
 
    update = () => {
       this.values.forEach((v) => {
-         v.el.innerHTML = writeVal(v.object[v.key])
+         v.el.innerHTML = writeVal(v.object[v.key], v.decimals)
       })
    }
 }

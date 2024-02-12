@@ -2,8 +2,7 @@ precision mediump float;
 
 float PI = 3.1415926;
 
-uniform vec3 uMouse;
-uniform vec2 uMouseScreen;
+uniform vec2 uMouse;
 uniform vec2 uCamSize;
 uniform float uPixelRatio;
 uniform vec2 uResolution;
@@ -19,7 +18,7 @@ void main() {
   vec2 st = gl_FragCoord.xy / resolution.xy;
   st.y *= resolution.y / resolution.x;
 
-  vec2 mouse = uMouseScreen;
+  vec2 mouse = uMouse;
   mouse *= 0.5;
   mouse += 0.5;
   mouse.y *= resolution.y / resolution.x;

@@ -16,9 +16,9 @@ let scroller: DNAScroll
 const sizes = new Sizes()
 const world = new World(sizes, false)
 world.renderer.outputColorSpace = THREE.SRGBColorSpace
+// @ts-ignore
 window.world = world
 
-const mouse = new Mouse(sizes)
 const clock = new THREE.Clock()
 
 const controls = new FlyControls(world.camera, world.renderer.domElement)
@@ -27,7 +27,7 @@ controls.dragToLook = true
 controls.autoForward = false
 controls.rollSpeed = Math.PI / 4
 
-const gui = new GUI().close()
+const gui = new GUI()
 const data = new DataView().hide()
 
 const baseUrl = import.meta.env.DEV ? '' : import.meta.env.BASE_URL
@@ -36,7 +36,7 @@ gltfLoader.load(baseUrl + '/scenes/dna/dna-2-painted.glb', (gltf) => {
    let object = gltf.scene?.children?.[0]
    if (!(object instanceof THREE.Mesh)) return
 
-   particles = new GeoParticles(object, world, mouse)
+   particles = new GeoParticles(object, world)
    afterLoad()
 })
 
@@ -57,7 +57,7 @@ const animate = () => {
    const delta = clock.getDelta()
    const time = clock.getElapsedTime()
 
-   if (particles) particles.tick(time)
+   if (particles) particles.tick(time, delta)
    controls.update(delta)
 
    data.update()
