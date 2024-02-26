@@ -2,6 +2,7 @@ import { GUI } from 'lil-gui'
 import * as THREE from 'three'
 import { FlyControls, GLTFLoader } from 'three/examples/jsm/Addons.js'
 import '../style.css'
+import Mouse from '../utils/Mouse'
 import World from '../utils/World'
 import { DataView } from '../utils/data-view'
 import Sizes from '../utils/sizes'
@@ -56,7 +57,7 @@ const animate = () => {
    const delta = clock.getDelta()
    const time = clock.getElapsedTime()
 
-   if (particles) particles.tick(time)
+   if (particles) particles.tick(time, delta)
    controls.update(delta)
 
    data.update()

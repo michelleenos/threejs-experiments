@@ -13,21 +13,8 @@ uniform float uScaleMain;
 uniform float uScaleMiddle;
 uniform float uRadius;
 
-uniform float uMousePow;
-uniform float uMouseMult;
-
-uniform vec2 uMouse;
-uniform vec2 uResolution;
-uniform float uMouseVel;
-// uniform float uMouseVelMax;
-uniform float uMaxDistort;
-uniform float uMouseAngle;
-
 attribute float aScale;
 attribute float aMiddleWeight;
-
-varying vec4 vTestPosition;
-
 #define PI 3.14159265358979323846
 
 #include "../../_glsl/snoise3d.glsl"
@@ -48,29 +35,6 @@ vec3 getSphereNoise(vec4 pos) {
   return noise;
 }
 
-vec3 mouseDisortFrom3Points(vec4 pos, vec3 mouse1, vec3 mouse2, vec3 mouse3) {
-  float dist1 = distance(mouse1, pos.xyz);
-  float dist2 = distance(mouse2, pos.xyz);
-  float dist3 = distance(mouse3, pos.xyz);
-  float dist = min(dist1, min(dist2, dist3));
-  dist = clamp(dist, 0.0, 1.0);
-  return (1.0 - dist) * 0.5 * normal;
-}
-
-vec2 clipToScreenSpace(vec4 pos, vec2 resolution) {
-  vec2 screenPos = pos.xy / pos.w;
-  screenPos.xy = screenPos.xy * 0.5 + 0.5;
-  screenPos.y *= resolution.y / resolution.x;
-  return screenPos;
-}
-
-vec4 screenToClipSpace(vec2 screenPos, vec4 pos, vec2 resolution) {
-  screenPos.y /= resolution.y / resolution.x;
-  pos.xy = screenPos * 2.0 - 1.0;
-  pos.xy *= pos.w;
-  return pos;
-}
-
 void main() {
 
   // make the whole thing a bit thinner (middle bars are smaller)
@@ -87,31 +51,7 @@ void main() {
   vec4 viewPosition = viewMatrix * modelPosition;
   vec4 projectedPosition = projectionMatrix * viewPosition;
 
-  // mouse calculations
-  vec2 resolution = uResolution * uPixelRatio;
-  vec2 mouse = uMouse;
-  mouse = mouse * 0.5 + 0.5;
-  mouse.y *= resolution.y / resolution.x;
-
-  // translate position to screen coords
-  vec2 screenPos = clipToScreenSpace(projectedPosition, resolution);
-
-  // mouse distortion
-  float d = distance(screenPos, mouse);
-  d = smoothstep(0.0, uRadius, d);
-  d = 1.0 - d;
-  d = pow(d, uMousePow);
-
-  vec2 distort = vec2(cos(uMouseAngle), sin(uMouseAngle));
-  float amount = d * uMouseMult * uMouseVel;
-  amount = clamp(amount, 0.0, uMaxDistort);
-  distort *= amount;
-  screenPos -= distort - distort * noise.xy;
-
-  // send this to fragment shader to test values
-  vTestPosition = vec4(d, screenPos.x, 0.0, 1.0);
-
-  gl_Position = screenToClipSpace(screenPos, projectedPosition, resolution);
+  gl_Position = projectedPosition;
 
   // scale, using weight attribute
   float scale = mix(uScaleMain, uScaleMiddle, aMiddleWeight);

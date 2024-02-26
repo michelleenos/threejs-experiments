@@ -21,6 +21,13 @@ export const makeDataView = (
    particlesData.add(particles.cloud, 'position')
    particlesData.add(particles.cloud, 'rotation')
 
+   let mouseData = data.createSection('mouse')
+   mouseData.add(particles, 'mouseVel', 'mouseVel', 3)
+   mouseData.add(particles, 'mouseAngle', 'mouseAngle', 3)
+
+   // mouseData.add(particles.mouse, 'screenPos')
+   // mouseData.add(particles.material.uniforms.uMouse1, 'value', 'cloudPos')
+
    scrollTableDataView(data, scroll)
 }
 
@@ -96,7 +103,26 @@ export const buildGui = (
       .add(particles.material.uniforms.uSquishMiddle, 'value', 0, 0.3, 0.001)
       .name('squish middles')
 
+   let fMouse = gui.addFolder('mouse')
+   fMouse.add(particles.material.uniforms.uRadius, 'value', 0, 0.5, 0.001).name('radius')
+   fMouse.add(particles, 'mousePosLerpVal', 0, 0.5, 0.001).name('lerp pos')
+   fMouse.add(particles, 'mouseVelLerpVal', 0, 0.5, 0.001).name('lerp vel')
+   fMouse.add(particles, 'mouseDragMult', 0.9, 1, 0.0001).name('drag mult')
+   fMouse.add(particles, 'mouseVelToZero', 0, 0.001, 0.0001).name('vel min to 0')
+   fMouse.add(particles.material.uniforms.uMouseMult, 'value', 0, 30, 0.1).name('mouse mult')
+   fMouse.add(particles.material.uniforms.uMousePow, 'value', 0, 30, 0.1).name('mouse pow')
+   fMouse.add(particles.material.uniforms.uMaxDistort, 'value', 0, 1, 0.01).name('max distort')
+   fMouse.add(particles, 'useFakeMouse')
+   let fFakeMouse = fMouse.addFolder('fake mouse')
+   fFakeMouse.add(particles.fakeMouse.pos, 'x', 0, 1, 0.01).name('x')
+   fFakeMouse.add(particles.fakeMouse.pos, 'y', 0, 1, 0.01).name('y')
+   fFakeMouse.add(particles.fakeMouse, 'vel', 0, 1, 0.01).name('vel')
+   fFakeMouse.add(particles.fakeMouse, 'angle', 0, Math.PI * 2, 0.01).name('angle')
+
    let fParticles = gui.addFolder('particles').close()
+   fParticles
+      .add(particles.raycaster.params.Points, 'threshold', 0, 10, 0.01)
+      .name('raycaster threshold')
    fParticles.add(particles, 'count', 0, 100000).name('count')
 
    let fCamera = gui.addFolder('camera').close().hide()
