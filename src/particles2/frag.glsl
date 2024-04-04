@@ -11,20 +11,10 @@ varying float v_toPointsCenter;
 
 void main() {
 
-	vec2 toCenter = gl_PointCoord - vec2(0.5, 0.5);
-	if ( length(toCenter) > 0.5 ) discard;
-	float alpha = 1.0 - length(toCenter) * 2.0;
-	
-	float pointsdist = v_toPointsCenter;
-	pointsdist = smoothstep(0.8, 0.0, pointsdist);
-	pointsdist *= exp(pointsdist);
-	pointsdist = min(1.0, pointsdist);
+  vec2 toCenter = gl_PointCoord - vec2(0.5, 0.5);
+  if (length(toCenter) > 0.5)
+    discard;
+  float alpha = 1.0 - length(toCenter) * 2.0;
 
-	alpha *= pointsdist;
-
-	float dist = v_dist * 2.0;
-
-	vec3 color = mix(u_color1, u_color2, dist);
-	gl_FragColor = vec4( color, alpha );
-
+  gl_FragColor = vec4(vec3(1.0, 1.0, 1.0), alpha);
 }
