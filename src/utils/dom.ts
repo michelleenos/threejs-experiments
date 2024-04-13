@@ -1,6 +1,6 @@
 export const createElement = (
    tag: string,
-   attributes?: { [key: string]: any },
+   attributes?: { [key: string]: string },
    content?: string | HTMLElement | (HTMLElement | null | string)[]
 ) => {
    const el = document.createElement(tag)

@@ -22,10 +22,12 @@ world.camera.position.set(-0.7, 2, -3.5)
 world.camera.updateProjectionMatrix()
 world.renderer.outputColorSpace = THREE.SRGBColorSpace
 
-world.controls.minPolarAngle = 0
-world.controls.maxPolarAngle = Math.PI / 2 - 0.1
-world.controls.maxDistance = 20
-world.controls.minDistance = 1
+if (world.controls) {
+   world.controls.minPolarAngle = 0
+   world.controls.maxPolarAngle = Math.PI / 2 - 0.1
+   world.controls.maxDistance = 20
+   world.controls.minDistance = 1
+}
 
 /**
  * Loaders

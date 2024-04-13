@@ -58,7 +58,7 @@ class DataViewSection {
          return
       }
       let titleEl = createElement('div', {}, name)
-      let valueEl = createElement('div', {}, writeVal(value))
+      let valueEl = createElement('div', {}, writeVal(value, decimals))
       this.dataEl.append(titleEl, valueEl)
       this.values.push({ el: valueEl, titleEl, object, key, decimals })
    }
