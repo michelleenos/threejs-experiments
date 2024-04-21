@@ -13,6 +13,7 @@ export default class World {
       this.sizes = sizes
       this.renderer = new THREE.WebGLRenderer({ antialias: true })
       this.renderer.setClearColor('#000')
+      this.renderer.outputColorSpace = THREE.SRGBColorSpace
       document.body.appendChild(this.renderer.domElement)
 
       this.scene = new THREE.Scene()
@@ -30,7 +31,7 @@ export default class World {
       this.camera.aspect = this.sizes.width / this.sizes.height
       this.camera.updateProjectionMatrix()
       this.renderer.setSize(this.sizes.width, this.sizes.height)
-      this.renderer.setPixelRatio(Math.min(this.sizes.pixelRatio, 2))
+      this.renderer.setPixelRatio(this.sizes.pixelRatio)
    }
 
    render = (time?: number) => {

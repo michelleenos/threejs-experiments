@@ -55,13 +55,13 @@ class GlowBall {
 
    controlPanel(pane: Pane, title: string = 'Glow Ball') {
       let folder = pane.addFolder({ title })
-      folder.addInput(this.shaderMaterial.uniforms.c, 'value', {
+      folder.addBinding(this.shaderMaterial.uniforms.c, 'value', {
          min: 0,
          max: 1,
          step: 0.01,
          label: 'c',
       })
-      folder.addInput(this.shaderMaterial.uniforms.p, 'value', {
+      folder.addBinding(this.shaderMaterial.uniforms.p, 'value', {
          min: 0,
          max: 10,
          step: 0.01,

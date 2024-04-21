@@ -13,8 +13,8 @@ export function makeAmbientLight(
    const light = new THREE.AmbientLight(color, intensity)
    if (pane) {
       const folder = pane.addFolder({ title: 'Ambient Light', expanded: false })
-      folder.addInput(light, 'color', { color: { type: 'float', expanded: true } })
-      folder.addInput(light, 'intensity', { min: 0, max: 5, step: 0.1 })
+      folder.addBinding(light, 'color', { color: { type: 'float', expanded: true } })
+      folder.addBinding(light, 'intensity', { min: 0, max: 5, step: 0.1 })
    }
    scene.add(light)
    return light
@@ -36,9 +36,9 @@ export function makeDirectionalLight(
    if (target) light.target = target
    if (pane) {
       const folder = pane.addFolder({ title: 'Directional Light', expanded: false })
-      folder.addInput(light, 'position', { x: { step: 1 }, y: { step: 1 }, z: { step: 1 } })
-      folder.addInput(light, 'color', { color: { type: 'float' } })
-      folder.addInput(light, 'intensity', { min: 0, max: 5, step: 0.1 })
+      folder.addBinding(light, 'position', { x: { step: 1 }, y: { step: 1 }, z: { step: 1 } })
+      folder.addBinding(light, 'color', { color: { type: 'float' } })
+      folder.addBinding(light, 'intensity', { min: 0, max: 5, step: 0.1 })
    }
    scene.add(light)
    return light
@@ -67,11 +67,11 @@ export function makePointLight(
    light.position.set(...position)
    if (pane) {
       const folder = pane.addFolder({ title: 'Point Light', expanded: false })
-      folder.addInput(light, 'position', { x: { step: 1 }, y: { step: 1 }, z: { step: 1 } })
-      folder.addInput(light, 'color', { color: { type: 'float' } })
-      folder.addInput(light, 'intensity', { min: 0, max: 5, step: 0.1 })
-      folder.addInput(light, 'distance', { min: 0, max: 5000, step: 1 })
-      folder.addInput(light, 'decay', { min: 0, max: 5, step: 0.1 })
+      folder.addBinding(light, 'position', { x: { step: 1 }, y: { step: 1 }, z: { step: 1 } })
+      folder.addBinding(light, 'color', { color: { type: 'float' } })
+      folder.addBinding(light, 'intensity', { min: 0, max: 5, step: 0.1 })
+      folder.addBinding(light, 'distance', { min: 0, max: 5000, step: 1 })
+      folder.addBinding(light, 'decay', { min: 0, max: 5, step: 0.1 })
    }
    scene.add(light)
    return light

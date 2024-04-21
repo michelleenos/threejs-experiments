@@ -1,0 +1,38 @@
+{
+  "main": {
+    "variant1": {
+      "x": 1.1999999999999995,
+      "y": 3.4,
+      "z": 5.6
+    },
+    "res1": 4.5,
+    "variant2": {
+      "x": 1.1999999999999995,
+      "y": 3.4,
+      "z": 5.6
+    },
+    "variant3": {
+      "x": 1.1999999999999995,
+      "y": 3.4,
+      "z": 5.6000000000000005
+    },
+    "res2": 3.4000000000000004,
+    "res3": 3.6000000000000005,
+    "amt1": 0.24999999999999992,
+    "amt2": 0.81,
+    "amt3": 0.39,
+    "particlesX": 75,
+    "particlesY": 57,
+    "sheetHeight": 5,
+    "useSine": false,
+    "useUvs": false
+  },
+  "children": {
+    "particles-noisy3-geometry": {
+      "sheetWidth": 8,
+      "sheetHeight": 5,
+      "particlesX": 75,
+      "particlesY": 57
+    }
+  }
+}

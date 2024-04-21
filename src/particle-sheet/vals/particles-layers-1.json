@@ -1,0 +1,43 @@
+{
+   "controllers": {},
+   "folders": {
+      "camera": {
+         "controllers": {
+            "cameraX": -0.5805215787552449,
+            "cameraY": -0.5256307994423624,
+            "cameraZ": 2.0938188372710296,
+            "fov": 55
+         },
+         "folders": {}
+      },
+      "uniforms": {
+         "controllers": {
+            "scaleChange": 0,
+            "scaleBase": 0.0017,
+            "curve": 7,
+            "petals": 8,
+            "amp": 0.21,
+            "zPow": 5,
+            "speed": 0.35,
+            "slice": 0.5
+         },
+         "folders": {}
+      },
+      "params": {
+         "controllers": {
+            "sheetWidth": 3,
+            "sheetHeight": 3,
+            "particlesX": 482,
+            "particlesY": 83,
+            "posX": -0.8,
+            "posY": -0.1,
+            "posZ": 0,
+            "rotX": -1.34,
+            "rotY": 0.05,
+            "rotZ": -1.65,
+            "blending": 1
+         },
+         "folders": {}
+      }
+   }
+}

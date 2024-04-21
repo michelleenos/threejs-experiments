@@ -106,3 +106,30 @@ h2 {
    color: #000;
    padding: 0.5rem;
 }
+
+:root {
+   --tp-container-horizontal-padding: 2px;
+   --tp-blade-value-width: 150px;
+   /* --tp-container-unit-size: 15px; */
+}
+
+.pane-custom-parent .pane-custom {
+   font-size: 10px;
+}
+
+body .pane-custom-parent {
+   width: 275px;
+}
+
+/* a nice lilgui theme */
+/* .lil-gui {
+	--background-color: #1d1c2c;
+	--text-color: #b2c2c2;
+	--title-background-color: #1d1c26;
+	--title-text-color: #b2c2c2;
+	--widget-color: #3f3c72;
+	--hover-color: #2f2c5e;
+	--focus-color: #2d3b86;
+	--number-color: #f2952c;
+	--string-color: #ffe2a3;
+} */

@@ -167,6 +167,7 @@ export default class EventEmitter {
       let names = _names
       names = names.replace(/[^a-zA-Z0-9 ,/.]/g, '')
       names = names.replace(/[,/]+/g, ' ')
+
       return names.split(' ')
    }
 

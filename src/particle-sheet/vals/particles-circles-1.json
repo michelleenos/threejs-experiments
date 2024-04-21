@@ -1,0 +1,80 @@
+{
+   "controllers": {},
+   "folders": {
+      "camera": {
+         "controllers": {
+            "cameraX": -6.020880639834255,
+            "cameraY": 0.7894179967138428,
+            "cameraZ": -6.964648315186485,
+            "fov": 35
+         },
+         "folders": {}
+      },
+      "uniforms-0": {
+         "controllers": {
+            "scaleBase": 0.014,
+            "curve": 5.5,
+            "petals": 8,
+            "amp": 0.5,
+            "zPow": 2.48,
+            "speed": 0.33,
+            "slice": 1,
+            "distortionFreq": 0.3,
+            "distortionAmp": 3.2,
+            "distortionSpeed": 0.1,
+            "color1": "#8025ff",
+            "color2": "#ea5339"
+         },
+         "folders": {}
+      },
+      "uniforms-1": {
+         "controllers": {
+            "scaleBase": 0.014,
+            "curve": 5.5,
+            "petals": 7,
+            "amp": 1,
+            "zPow": 2.17,
+            "speed": 0.35,
+            "slice": 1,
+            "distortionFreq": 3,
+            "distortionAmp": 1,
+            "distortionSpeed": 0.5,
+            "color1": "#2478ff",
+            "color2": "#6e39ea"
+         },
+         "folders": {}
+      },
+      "params-0": {
+         "controllers": {
+            "sheetWidth": 5,
+            "sheetHeight": 5,
+            "particlesX": 246,
+            "particlesY": 138,
+            "posX": 0,
+            "posY": 0,
+            "posZ": 0,
+            "rotX": 0,
+            "rotY": 0,
+            "rotZ": 0,
+            "blending": 1
+         },
+         "folders": {}
+      },
+      "params-1": {
+         "controllers": {
+            "sheetWidth": 6,
+            "sheetHeight": 3,
+            "particlesX": 221,
+            "particlesY": 214,
+            "posX": 0,
+            "posY": 0,
+            "posZ": 0,
+            "rotX": -1.73,
+            "rotY": 1.62,
+            "rotZ": -1.89,
+            "blending": 1
+         },
+         "folders": {}
+      }
+   }
+}

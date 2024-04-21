@@ -1,0 +1,28 @@
+{
+  "main": {
+    "targetPower": 0.49999999999999994,
+    "noiseFreq": 0.26,
+    "noiseAmp": 1,
+    "noiseSpeed": 0.12999999999999998,
+    "scaleChange": 0.059,
+    "mixOklab": false,
+    "circleWaveFreq": 10,
+    "circleWaveSpeed": 0.16999999999999998,
+    "circleWaveAmp": 1,
+    "alphaOffsetStart": 0.16,
+    "alphaOffsetEnd": 0.47000000000000003,
+    "useMouse": false,
+    "sheetWidth": 8,
+    "sheetHeight": 6,
+    "particlesX": 150,
+    "particlesY": 60
+  },
+  "children": {
+    "particles-snoise-geometry": {
+      "sheetWidth": 8,
+      "sheetHeight": 6,
+      "particlesX": 150,
+      "particlesY": 60
+    }
+  }
+}
