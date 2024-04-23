@@ -36,18 +36,18 @@ void main() {
   v_colorMix = uv.x;
 
   // ***** Calculations ***** //
-  float wave =
-      sin(pos.x * u_waveFreq.x + u_time * u_waveSpeed.x) * u_waveAmp.x +
-      sin(pos.y * u_waveFreq.y + u_time * u_waveSpeed.y) * u_waveAmp.y;
-
   vec3 noise = vec3(0.0);
 
   for (float i = 1.0; i <= u_noiseIterations; i++) {
-    noise += curl(pos * u_noiseFreq * i + u_time * u_noiseSpeed * i) *
+    vec3 n = curl(pos * u_noiseFreq * (i * 0.5) + u_time * u_noiseSpeed * i) *
              u_noiseAmp / i;
+    noise += n;
+    pos += n;
   }
-  vec3 newpos = pos + noise;
-  newpos.z -= wave;
+  vec3 newpos = pos;
+  float d = length(pos.xy - position.xy);
+  newpos.z -= d;
+  // newpos.z += noise.z * 15.0;
 
   vec4 modelPosition = modelMatrix * vec4(newpos, 1.0);
   vec4 viewPosition = viewMatrix * modelPosition;

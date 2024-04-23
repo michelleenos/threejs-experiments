@@ -3,13 +3,6 @@ import { ParticleSheetBase } from './particle-sheet-base'
 import * as THREE from 'three'
 import '../style.css'
 
-const geoDefaults = {
-   sheetWidth: 8,
-   sheetHeight: 6,
-   nx: 150,
-   ny: 60,
-}
-
 const getGlsl = async (folder: string, file: string) => {
    return await import(`./glsl/${folder}/${file}.glsl`).then((m) => m.default)
 }
@@ -21,7 +14,13 @@ const base = new ParticleSheetBase({
          key: 'curlnoise',
          sheets: [
             {
-               params: { ...geoDefaults },
+               params: {
+                  sheetWidth: 8,
+                  sheetHeight: 6,
+                  nx: 150,
+                  ny: 60,
+                  // scale: new THREE.Vector3(8, 6, 1),
+               },
                material: {
                   vertexShader: await getGlsl('curlnoise', 'vert'),
                   fragmentShader: await getGlsl('curlnoise', 'frag'),
@@ -33,6 +32,32 @@ const base = new ParticleSheetBase({
                      ['waveFreq', new THREE.Vector2(1, 3), -5, 5, 0.01],
                      ['waveAmp', new THREE.Vector2(0.2, 0.5), -2, 2, 0.01],
                      ['waveSpeed', new THREE.Vector2(0.2, 0.5), -1, 1, 0.01],
+                     ['scaleChangeAmt', 0.014, 0, 0.2, 0.001],
+                     ['mixOklab', false],
+                  ],
+               },
+            },
+         ],
+      },
+      {
+         key: 'curlnoise-scaled',
+         sheets: [
+            {
+               params: {
+                  sheetWidth: 1,
+                  sheetHeight: 1,
+                  nx: 150,
+                  ny: 60,
+                  scale: new THREE.Vector3(8, 6, 6),
+               },
+               material: {
+                  vertexShader: await getGlsl('curlnoise', 'vert'),
+                  fragmentShader: await getGlsl('curlnoise', 'frag'),
+                  uniforms: [
+                     ['noiseIterations', 3, 1, 10, 1],
+                     ['noiseFreq', 0.8, -2, 2, 0.001],
+                     ['noiseAmp', 0.1125, -2, 2, 0.001],
+                     ['noiseSpeed', 0.05, -1, 1, 0.001],
                      ['scaleChangeAmt', 0.014, 0, 0.2, 0.001],
                      ['mixOklab', false],
                   ],
@@ -68,6 +93,7 @@ const base = new ParticleSheetBase({
                      ['useMouse', false],
                   ],
                },
+               colors: [new THREE.Color('#57ff92'), new THREE.Color('#a724ff')],
             },
          ],
       },
@@ -84,8 +110,8 @@ const base = new ParticleSheetBase({
                   rotation: new THREE.Euler(-0.1, 0, 0),
                },
                colors: [
-                  new THREE.Color('#FF8D25'),
-                  new THREE.Color('#8C7B6F'),
+                  new THREE.Color('#a724ff'),
+                  new THREE.Color('#57ff92'),
                   new THREE.Color('#0067A7'),
                ],
                material: {
@@ -193,8 +219,6 @@ const base = new ParticleSheetBase({
                   sheetHeight: 4,
                   nx: 375,
                   ny: 30,
-                  // rotation: new THREE.Euler(Math.PI * 0.4, 0, 0),
-                  // position: new THREE.Vector3(0, 0.5, 0),
                },
                material: {
                   vertexShader: await getGlsl('ribbon', 'vert'),
@@ -204,15 +228,15 @@ const base = new ParticleSheetBase({
                      ['variantY', 2, 0, 10, 0.1],
                      ['variantZ', 3, 0, 10, 0.1],
                      ['variantX', 4, 0, 10, 0.1],
-                     ['freqY', 0.3, -2, 2, 0.1],
-                     ['freqZ', 0.5, -2, 2, 0.1],
-                     ['freqX', 0.5, -2, 2, 0.1],
+                     ['freqY', 0.3, 0, 2, 0.1],
+                     ['freqZ', 0.5, 0, 2, 0.1],
+                     ['freqX', 0.5, 0, 2, 0.1],
                      ['speedY', 0.4, -2, 2, 0.1],
                      ['speedZ', 0.5, -2, 2, 0.1],
                      ['speedX', 0.5, -2, 2, 0.1],
-                     ['ampX', 0.9, -2, 2, 0.1],
-                     ['ampY', 0.9, -2, 2, 0.1],
-                     ['ampZ', 0.2, -2, 2, 0.1],
+                     ['ampX', 0.9, 0, 2, 0.1],
+                     ['ampY', 0.9, 0, 2, 0.1],
+                     ['ampZ', 0.2, 0, 2, 0.1],
                      ['space', 0.7, -3, 3, 0.1],
                      ['layersDiff', 3, -10, 10, 0.1],
                      ['rot', 1, -5, 5, 0.1],
@@ -252,7 +276,6 @@ const base = new ParticleSheetBase({
    ],
 })
 
-base.useGui = true
 base.createAll()
 base.start()
 

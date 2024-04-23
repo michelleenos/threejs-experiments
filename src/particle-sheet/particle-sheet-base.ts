@@ -1,16 +1,12 @@
+import GUI from 'lil-gui'
+import * as THREE from 'three'
 import Mouse from '../utils/Mouse'
 import World from '../utils/World'
-import Sizes from '../utils/sizes'
-import * as THREE from 'three'
-import { Particles, type ParticleSheetParams } from './Particles'
-import { PaneWithLocalStorage } from '../utils/local-storage-pane'
-import { Pane, TpChangeEvent } from 'tweakpane'
 import { createElement } from '../utils/dom'
-import './particle-sheet.css'
-import { throttle } from '../utils/throttle'
-import GUI from 'lil-gui'
 import { GuiWithLocalStorage } from '../utils/local-storage-gui'
-// import { EffectComposer, DepthOfFieldEffect,  } from 'postprocessing'
+import Sizes from '../utils/sizes'
+import { Particles, type ParticleSheetParams } from './Particles'
+import './particle-sheet.css'
 
 export type BaseOpts = {
    key?: string
@@ -28,6 +24,7 @@ export type SheetViewData = {
    saveCamera?: boolean
    sheets: {
       material: MaterialData
+      setVals?: boolean
       params: ParticleSheetParams & {
          position?: THREE.Vector3
          rotation?: THREE.Euler
@@ -40,22 +37,14 @@ export type SheetViewData = {
    }[]
 }
 
-export type ParticleUniformNoControl = [
+export type ParticleUniform = [
    key: string,
    val: number | THREE.Vector2 | THREE.Vector3 | boolean,
-   control: false
+   min?: number,
+   max?: number,
+   step?: number,
+   lsKey?: string
 ]
-
-export type ParticleUniform =
-   | [
-        key: string,
-        val: number | THREE.Vector2 | THREE.Vector3 | boolean,
-        min?: number,
-        max?: number,
-        step?: number,
-        lsKey?: string
-     ]
-   | ParticleUniformNoControl
 
 export class ParticleSheetBase {
    baseKey: string = 'particles'
@@ -70,12 +59,8 @@ export class ParticleSheetBase {
    viewData: SheetViewData[]
    viewDataIndex: number = -1
    viewDataCurrent!: SheetViewData
-   pls: PaneWithLocalStorage | null = null
-   pane: Pane | null = null
    colors: THREE.Color[] = [new THREE.Color('#FF8D25'), new THREE.Color('#0067A7')]
-   viewBtns: HTMLElement[]
-
-   useGui: boolean = false
+   viewBtns?: HTMLElement[]
 
    gui: GUI | null = null
    gls: GuiWithLocalStorage | null = null
@@ -98,7 +83,9 @@ export class ParticleSheetBase {
 
       this.viewData = opts.data
 
-      this.viewBtns = this.makeViewChooser()
+      if (this.viewData.length > 1) {
+         this.viewBtns = this.makeViewChooser()
+      }
 
       let firstIndex = parseInt(localStorage.getItem(`${this.baseKey}-view`) || '0')
       this.setViewDataIndex(firstIndex)
@@ -111,10 +98,7 @@ export class ParticleSheetBase {
 
    setCameraVals = () => {
       let currentView = this.viewDataCurrent
-      if (!currentView) {
-         console.warn('no current view data')
-         return
-      }
+      if (!currentView) return
       if (!currentView.saveCamera) {
          this.world.camera.position.copy(this.defaultCameraPos)
          this.cameraListening = false
@@ -151,8 +135,8 @@ export class ParticleSheetBase {
 
       this.viewDataIndex = index
       this.viewDataCurrent = JSON.parse(JSON.stringify(this.viewData[this.viewDataIndex]))
-      this.viewBtns.forEach((btn) => btn.classList.remove('active'))
-      this.viewBtns[this.viewDataIndex].classList.add('active')
+      this.viewBtns?.forEach((btn) => btn.classList.remove('active'))
+      this.viewBtns?.[this.viewDataIndex].classList.add('active')
       localStorage.setItem(`${this.baseKey}-view`, `${this.viewDataIndex}`)
       this.getParams()
    }
@@ -165,22 +149,9 @@ export class ParticleSheetBase {
          this.particles = []
       }
 
-      if (this.useGui) {
-         // this.gls?.dispose()
-         this.gui?.destroy()
-         this.gls = null
-         this.gui = null
-      } else {
-         if (this.pls) {
-            this.pls.dispose()
-            this.pls = null
-         }
-
-         if (this.pane) {
-            this.pane.dispose()
-            this.pane = null
-         }
-      }
+      this.gui?.destroy()
+      this.gls = null
+      this.gui = null
       this.stop()
 
       setTimeout(() => {
@@ -224,11 +195,7 @@ export class ParticleSheetBase {
          return
       }
 
-      if (this.useGui) {
-         this.setupGui()
-      } else {
-         this.setupPane()
-      }
+      this.setupGui()
 
       currentView.sheets.forEach((sheet) => {
          this.particles.push(
@@ -245,7 +212,7 @@ export class ParticleSheetBase {
       this.setCameraVals()
       this.setUniforms()
       this.setGeometryStuff()
-      this.setParticlesPane()
+      this.setParticlesGui()
    }
 
    setupGui = () => {
@@ -257,27 +224,12 @@ export class ParticleSheetBase {
       this.glsCameraControls = this.gls.cameraControls(this.world.camera)
    }
 
-   setupPane = () => {
-      this.pane = new Pane({ title: 'particles' })
-      this.pls = new PaneWithLocalStorage({
-         key: this.currentKey,
-         pane: this.pane,
-         btnsInFolder: true,
-         onReset: () => {
-            localStorage.removeItem(`${this.currentKey}-camera`)
-         },
-      })
-      this.pls.addButton('reset camera').on('click', this.resetCamera)
-   }
-
    resetCamera = () => {
       localStorage.removeItem(`${this.currentKey}-camera`)
       this.setCameraVals()
    }
 
-   onParamsChange = (e: TpChangeEvent<unknown>) => {
-      if (!this.useGui && !e.last) return
-
+   onParamsChange = () => {
       setTimeout(() => this.restart())
    }
 
@@ -294,124 +246,36 @@ export class ParticleSheetBase {
    }
 
    setUniforms = () => {
-      if (this.useGui) return this.setUniformsGui()
-      let view = this.viewData[this.viewDataIndex]
-      if (!this.particles) return console.warn('no particles, cant set uniforms')
-      if (!this.pls) return console.warn('no pls')
-
-      view.sheets.forEach((sheet, i) => {
-         let uniforms = sheet.material.uniforms
-         if (!this.particles[i]) return
-
-         let folderTitle = this.particles.length > 1 ? `uniforms-${i}` : 'uniforms'
-         let folder = this.pls!.addFolder(folderTitle)
-         uniforms.forEach((uniform) => {
-            let [key, val, min, max, step] = uniform
-            let uKey = `u_${key}`
-            this.particles[i].setUniforms({
-               [uKey]: new THREE.Uniform(val),
-            })
-            if (min !== false) {
-               folder.addNum(
-                  this.particles[i].material.uniforms[uKey],
-                  'value',
-                  min,
-                  max,
-                  step,
-                  key
-               )
-            }
-         })
-
-         let colors = sheet.colors || this.colors
-         colors.forEach((color, j) => {
-            this.particles[i].setUniforms({
-               [`u_color${j + 1}`]: new THREE.Uniform(color),
-            })
-         })
-      })
-   }
-
-   setUniformsGui = () => {
       let view = this.viewData[this.viewDataIndex]
       if (!this.particles) return console.warn('no particles, cant set uniforms')
       if (!this.gls) return console.warn('no gls')
 
       view.sheets.forEach((sheet, i) => {
-         let uniforms = sheet.material.uniforms
+         let { setVals = true, colors = this.colors } = sheet
+         let us = sheet.material.uniforms
          if (!this.particles[i]) return
 
          let folderTitle = this.particles.length > 1 ? `uniforms-${i}` : 'uniforms'
          let folder = this.gls!.addFolder(folderTitle)
 
-         let material = this.particles[i].material
-         uniforms.forEach((uniform) => {
+         let mat = this.particles[i].material
+         us.forEach((uniform) => {
             let [key, val, min, max, step] = uniform
             let uKey = `u_${key}`
             this.particles[i].setUniforms({
                [uKey]: new THREE.Uniform(val),
             })
-            if (min !== false) {
-               if (val instanceof THREE.Vector3) {
-                  folder.add(material.uniforms[uKey].value, 'x', [min, max, step], `${key}X`)
-                  folder.add(material.uniforms[uKey].value, 'y', [min, max, step], `${key}Y`)
-                  folder.add(material.uniforms[uKey].value, 'z', [min, max, step], `${key}Z`)
-               } else if (val instanceof THREE.Vector2) {
-                  folder.add(material.uniforms[uKey].value, 'x', [min, max, step], `${key}X`)
-                  folder.add(material.uniforms[uKey].value, 'y', [min, max, step], `${key}Y`)
-               } else {
-                  folder.add(material.uniforms[uKey], 'value', [min, max, step], key)
-               }
+            if (typeof min === 'number') {
+               folder.add(mat.uniforms[uKey], 'value', [min, max, step], key, setVals)
             }
          })
 
-         let colors = sheet.colors || this.colors
          colors.forEach((color, j) => {
             this.particles[i].setUniforms({
                [`u_color${j + 1}`]: new THREE.Uniform(color),
             })
-            folder.addColor(material.uniforms[`u_color${j + 1}`], 'value', `color${j + 1}`)
+            folder.addColor(mat.uniforms[`u_color${j + 1}`], 'value', `color${j + 1}`)
          })
-      })
-   }
-
-   setParticlesPane = () => {
-      if (this.useGui) return this.setParticlesGui()
-      if (!this.pls || !this.pane || !this.particles.length) return
-      let view = this.viewDataCurrent
-
-      view.sheets.forEach((sheet, i) => {
-         if (!this.particles[i]) return
-         let title = this.viewDataCurrent.sheets.length > 1 ? `params-${i}` : 'params'
-         let pfolder = this.pls!.addFolder(title)
-         let params = sheet.params
-
-         pfolder
-            .addNum(params, 'sheetWidth', 1, 20, 1, 'sheetWidth')
-            .on('change', this.onParamsChange)
-         pfolder
-            .addNum(params, 'sheetHeight', 1, 20, 1, 'sheetHeight')
-            .on('change', this.onParamsChange)
-         pfolder.addNum(params, 'nx', 1, 500, 1, 'particlesX').on('change', this.onParamsChange)
-         pfolder.addNum(params, 'ny', 1, 500, 1, 'particlesY').on('change', this.onParamsChange)
-
-         if (params.position) pfolder.add(this.particles[i], 'position', { min: -10, max: 10 })
-         if (params.rotation)
-            pfolder.addOther(this.particles[i], 'rotation', {
-               view: 'rotation',
-               rotationMode: 'euler',
-            })
-
-         if (params.blending?.controls) {
-            pfolder.addOther(this.particles[i].material, 'blending', {
-               options: {
-                  Normal: THREE.NormalBlending,
-                  Additive: THREE.AdditiveBlending,
-                  Subtractive: THREE.SubtractiveBlending,
-                  Multiply: THREE.MultiplyBlending,
-               },
-            })
-         }
       })
    }
 
@@ -423,28 +287,34 @@ export class ParticleSheetBase {
          if (!this.particles[i]) return
          let title = this.viewDataCurrent.sheets.length > 1 ? `params-${i}` : 'params'
          let pfolder = this.gls!.addFolder(title)
-         let params = sheet.params
+         let { params, setVals } = sheet
 
          pfolder
-            .add(params, 'sheetWidth', [1, 20, 1], 'sheetWidth')
+            .add(params, 'sheetWidth', [1, 20, 1], 'sheetWidth', setVals)[0]
             .onFinishChange(this.onParamsChange)
          pfolder
-            .add(params, 'sheetHeight', [1, 20, 1], 'sheetHeight')
+            .add(params, 'sheetHeight', [1, 20, 1], 'sheetHeight', setVals)[0]
             .onFinishChange(this.onParamsChange)
 
-         pfolder.add(params, 'nx', [1, 500, 1], 'particlesX').onFinishChange(this.onParamsChange)
-         pfolder.add(params, 'ny', [1, 500, 1], 'particlesY').onFinishChange(this.onParamsChange)
+         pfolder
+            .add(params, 'nx', [1, 500, 1], 'particlesX', setVals)[0]
+            .onFinishChange(this.onParamsChange)
+         pfolder
+            .add(params, 'ny', [1, 500, 1], 'particlesY', setVals)[0]
+            .onFinishChange(this.onParamsChange)
 
          if (params.position) {
-            pfolder.add(this.particles[i].position, 'x', [-10, 10, 0.1], 'posX')
-            pfolder.add(this.particles[i].position, 'y', [-10, 10, 0.1], 'posY')
-            pfolder.add(this.particles[i].position, 'z', [-10, 10, 0.1], 'posZ')
+            pfolder.add(this.particles[i].position, 'x', [-10, 10, 0.1], 'posX', setVals)
+            pfolder.add(this.particles[i].position, 'y', [-10, 10, 0.1], 'posY', setVals)
+            pfolder.add(this.particles[i].position, 'z', [-10, 10, 0.1], 'posZ', setVals)
          }
          if (params.rotation) {
-            pfolder.add(this.particles[i].rotation, 'x', [-Math.PI, Math.PI, 0.01], 'rotX')
-            pfolder.add(this.particles[i].rotation, 'y', [-Math.PI, Math.PI, 0.01], 'rotY')
-            pfolder.add(this.particles[i].rotation, 'z', [-Math.PI, Math.PI, 0.01], 'rotZ')
+            pfolder.add(this.particles[i].rotation, 'x', [-Math.PI, Math.PI, 0.01], 'rotX', setVals)
+            pfolder.add(this.particles[i].rotation, 'y', [-Math.PI, Math.PI, 0.01], 'rotY', setVals)
+            pfolder.add(this.particles[i].rotation, 'z', [-Math.PI, Math.PI, 0.01], 'rotZ', setVals)
          }
+
+         pfolder.add(this.particles[i], 'visible')
 
          if (params.blending?.controls) {
             pfolder.add(this.particles[i].material, 'blending', [
@@ -462,10 +332,10 @@ export class ParticleSheetBase {
    getParams = () => {
       let view = this.viewDataCurrent
       view.sheets.forEach((sheet, i) => {
+         let { setVals = true, params } = sheet
          let title = view.sheets.length > 1 ? `params-${i}` : 'params'
          let storedParams = JSON.parse(localStorage.getItem(`${this.currentKey}-${title}`)!)
-         let params = sheet.params
-         if (storedParams) {
+         if (storedParams && setVals) {
             if (storedParams.sheetWidth) params.sheetWidth = storedParams.sheetWidth
             if (storedParams.sheetHeight) params.sheetHeight = storedParams.sheetHeight
             if (storedParams.particlesX) params.nx = storedParams.particlesX
@@ -480,12 +350,10 @@ export class ParticleSheetBase {
       })
    }
 
-   tick = () => {
-      let time = this.clock.getElapsedTime()
+   update = (time: number) => {
       if (this.particles.length) this.particles.forEach((p) => p.update(time))
-      this.world.render()
 
-      // let cameraPos = this.world.camera.position
+      this.world.render()
 
       if (this.cameraListening && this.glsCameraControls) {
          let vals = this.glsCameraControls.gui.save() as { controllers: { [key: string]: any } }
@@ -496,7 +364,11 @@ export class ParticleSheetBase {
          storedCamera.cameraZ = vals.controllers.cameraZ
          localStorage.setItem(`${this.currentKey}-camera`, JSON.stringify(storedCamera))
       }
+   }
 
+   tick = () => {
+      let time = this.clock.getElapsedTime()
+      this.update(time)
       this.rafId = requestAnimationFrame(this.tick)
    }
 

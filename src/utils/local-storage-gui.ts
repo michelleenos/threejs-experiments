@@ -1,4 +1,4 @@
-import GUI from 'lil-gui'
+import GUI, { type Controller } from 'lil-gui'
 import * as THREE from 'three'
 
 type GuiAddParams = [
@@ -52,11 +52,24 @@ export class GuiWithLocalStorage {
       obj: { [key: string]: any },
       key: string,
       params: GuiAddParams = [],
-      lsKey: string = key
-   ) => {
-      if (this.storedVals.hasOwnProperty(lsKey)) {
+      lsKey: string = key,
+      useStored = true
+   ): Controller[] => {
+      if (obj[key] instanceof THREE.Vector3) {
+         return [
+            ...this.add(obj[key], 'x', [...params], `${lsKey}X`),
+            ...this.add(obj[key], 'y', [...params], `${lsKey}Y`),
+            ...this.add(obj[key], 'z', [...params], `${lsKey}Z`),
+         ]
+      } else if (obj[key] instanceof THREE.Vector2) {
+         return [
+            ...this.add(obj[key], 'x', [...params], `${lsKey}X`),
+            ...this.add(obj[key], 'y', [...params], `${lsKey}Y`),
+         ]
+      }
+
+      if (useStored && this.storedVals.hasOwnProperty(lsKey)) {
          obj[key] = this.storedVals[lsKey]
-         // if (onChange) onChange(this.storedVals[lsKey])
       } else {
          this.storedVals[lsKey] = obj[key]
          this.setStorage()
@@ -65,7 +78,7 @@ export class GuiWithLocalStorage {
       let controller = this.gui.add(obj, key, ...params).name(lsKey)
       controller.domElement.setAttribute('data-ls-key', lsKey)
 
-      return controller
+      return [controller]
    }
 
    addColor = (obj: { [key: string]: any }, key: string, lsKey: string = key) => {
@@ -97,7 +110,6 @@ export class GuiWithLocalStorage {
    }
 
    setStorage = () => {
-      console.log('set', this.storedVals)
       localStorage.setItem(this.storageKey, JSON.stringify(this.storedVals))
    }
 
@@ -110,11 +122,11 @@ export class GuiWithLocalStorage {
 
    cameraControls = (camera: THREE.PerspectiveCamera) => {
       let folder = this.addFolder('camera')
-      folder.add(camera.position, 'x', [], 'cameraX').decimals(3).listen()
-      folder.add(camera.position, 'y', [], 'cameraY').decimals(3).listen()
-      folder.add(camera.position, 'z', [], 'cameraZ').decimals(3).listen()
+      folder.add(camera.position, 'x', [], 'cameraX')[0].decimals(3).listen()
+      folder.add(camera.position, 'y', [], 'cameraY')[0].decimals(3).listen()
+      folder.add(camera.position, 'z', [], 'cameraZ')[0].decimals(3).listen()
       folder
-         .add(camera, 'fov', [1, 180, 1], 'fov')
+         .add(camera, 'fov', [1, 180, 1], 'fov')[0]
          .listen()
          .name('fov')
          .onChange(() => {

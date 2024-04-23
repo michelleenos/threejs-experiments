@@ -9,6 +9,7 @@ export type ParticleSheetParams = {
    sheetHeight: number
    nx: number
    ny: number
+   scale?: THREE.Vector3
 }
 
 export type ParticleParams = {
@@ -46,6 +47,10 @@ export class Particles extends THREE.Points {
       this.material = this.createMaterial()
       this.planeHelper = this.createHelper()
       this.world.scene.add(this)
+
+      if (this.params.scale) {
+         this.scale.copy(this.params.scale)
+      }
 
       if (opts.mouseLerp) this.mouseLerp = opts.mouseLerp
    }
