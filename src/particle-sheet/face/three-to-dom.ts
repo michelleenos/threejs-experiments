@@ -7,7 +7,7 @@ type ThreeToDomParams = {
    sizes: { width: number; height: number }
 }
 
-// both below are assuming the object has a scale and is a flat plane
+// both below are assuming the object has a scale of 1 and is a flat plane
 export const setCameraToTarget = ({ object, target, camera, sizes }: ThreeToDomParams) => {
    const rect = target.getBoundingClientRect()
 

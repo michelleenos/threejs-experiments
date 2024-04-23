@@ -1,34 +1,34 @@
-export type TEasing = (time: number) => number
+export type Easing = (time: number) => number
 
-export interface IEasingMap {
-   linear: TEasing
-   quadratic: TEasing
-   cubic: TEasing
-   elastic: TEasing
-   inQuad: TEasing
-   outQuad: TEasing
-   inOutQuad: TEasing
-   inCubic: TEasing
-   outCubic: TEasing
-   inOutCubic: TEasing
-   inQuart: TEasing
-   outQuart: TEasing
-   inOutQuart: TEasing
-   inQuint: TEasing
-   outQuint: TEasing
-   inOutQuint: TEasing
-   inSine: TEasing
-   outSine: TEasing
-   inOutSine: TEasing
-   inExpo: TEasing
-   outExpo: TEasing
-   inOutExpo: TEasing
-   inCirc: TEasing
-   outCirc: TEasing
-   inOutCirc: TEasing
+export interface EasingMap {
+   linear: Easing
+   quadratic: Easing
+   cubic: Easing
+   elastic: Easing
+   inQuad: Easing
+   outQuad: Easing
+   inOutQuad: Easing
+   inCubic: Easing
+   outCubic: Easing
+   inOutCubic: Easing
+   inQuart: Easing
+   outQuart: Easing
+   inOutQuart: Easing
+   inQuint: Easing
+   outQuint: Easing
+   inOutQuint: Easing
+   inSine: Easing
+   outSine: Easing
+   inOutSine: Easing
+   inExpo: Easing
+   outExpo: Easing
+   inOutExpo: Easing
+   inCirc: Easing
+   outCirc: Easing
+   inOutCirc: Easing
 }
 
-export const easing: IEasingMap = {
+export const easing: EasingMap = {
    // No easing, no acceleration
    linear: (t) => t,
 
