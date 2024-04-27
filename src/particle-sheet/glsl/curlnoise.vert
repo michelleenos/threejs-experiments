@@ -28,8 +28,8 @@ varying float v_dist;
 
 float PI = 3.1415926;
 
-#include "../../../_glsl/lygia/color/mixOklab.glsl"
-#include "../../../_glsl/lygia/generative/curl.glsl"
+#include "../../_glsl/lygia/color/mixOklab.glsl"
+#include "../../_glsl/lygia/generative/curl.glsl"
 
 void main() {
   vec3 pos = position;

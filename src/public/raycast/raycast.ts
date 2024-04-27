@@ -1,6 +1,6 @@
 import '../style.css'
 import * as THREE from 'three'
-import { Scene } from '../utils/scene'
+import { Scene } from '../../utils/scene'
 import { Lensflare, LensflareElement } from 'three/addons/objects/Lensflare.js'
 
 class RayScene extends Scene {

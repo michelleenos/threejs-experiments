@@ -31,8 +31,8 @@ varying float v_toMouse;
 
 float PI = 3.1415926;
 
-#include "../../../_glsl/lygia/color/mixOklab.glsl"
-#include "../../../_glsl/lygia/generative/snoise.glsl"
+#include "../../_glsl/lygia/color/mixOklab.glsl"
+#include "../../_glsl/lygia/generative/snoise.glsl"
 
 void main() {
   vec3 pos = position;

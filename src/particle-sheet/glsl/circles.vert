@@ -29,7 +29,7 @@ varying vec3 v_pos;
 
 float PI = 3.1415926;
 
-#include "../../../_glsl/lygia/generative/pnoise.glsl"
+#include "../../_glsl/lygia/generative/pnoise.glsl"
 
 void main() {
   vec3 pos = position;

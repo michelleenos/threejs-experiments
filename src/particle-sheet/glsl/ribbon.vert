@@ -28,9 +28,9 @@ varying vec3 v_color;
 
 float PI = 3.1415926;
 
-#include "../../../_glsl/lygia/generative/pnoise.glsl"
-#include "../../../_glsl/lygia/generative/snoise.glsl"
-#include "../../../_glsl/lygia/math/rotate3d.glsl"
+#include "../../_glsl/lygia/generative/pnoise.glsl"
+#include "../../_glsl/lygia/generative/snoise.glsl"
+#include "../../_glsl/lygia/math/rotate3d.glsl"
 
 void main() {
   vec2 uv2 = uv;

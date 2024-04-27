@@ -2,8 +2,8 @@ import { ParticleSheetBase } from '../particle-sheet-base'
 import * as THREE from 'three'
 import '../../style.css'
 
-const getGlsl = async (folder: string, file: string) => {
-   return await import(`../glsl/${folder}/${file}.glsl`).then((m) => m.default)
+const getGlsl = async (name: string, stage: string) => {
+   return await import(`../glsl/${name}.${stage}`).then((m) => m.default)
 }
 
 const experience = new ParticleSheetBase({
@@ -14,10 +14,10 @@ const experience = new ParticleSheetBase({
          sheets: [
             {
                params: {
-                  sheetWidth: 10,
-                  sheetHeight: 4,
-                  nx: 150,
-                  ny: 50,
+                  sheetWidth: 1,
+                  sheetHeight: 1,
+                  nx: 100,
+                  ny: 100,
                },
                material: {
                   vertexShader: await getGlsl('spheres', 'vert'),
@@ -44,6 +44,7 @@ const sphere2 = new THREE.Mesh(
 sphere1.position.set(-5, 3, 0)
 sphere1.visible = false
 sphere2.position.set(5, 3, 0)
+sphere2.visible = false
 
 world.scene.add(sphere1, sphere2)
 
@@ -53,6 +54,7 @@ particles.setUniforms({
    u_c1: new THREE.Uniform(sphere1.position),
    u_c2: new THREE.Uniform(sphere2.position),
 })
+particles.scale.set(5, 5, 5)
 
 const animate = () => {
    let time = clock.getElapsedTime()

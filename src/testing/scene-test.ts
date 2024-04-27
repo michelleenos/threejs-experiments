@@ -14,7 +14,7 @@ const gui = new GUI()
 
 world.camera.position.set(5, 7, -5)
 world.renderer.outputColorSpace = THREE.SRGBColorSpace
-world.controls.zoomSpeed = 0.5
+if (world.controls) world.controls.zoomSpeed = 0.5
 
 /**
  * Loaders

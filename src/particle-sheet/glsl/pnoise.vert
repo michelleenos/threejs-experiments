@@ -34,8 +34,8 @@ varying float v_toMouse;
 float PI = 3.1415926;
 
 // #include "../../../_glsl/lygia/generative/voronoise.glsl"
-#include "../../../_glsl/lygia/animation/easing"
-#include "../../../_glsl/lygia/generative/pnoise.glsl"
+#include "../../_glsl/lygia/animation/easing"
+#include "../../_glsl/lygia/generative/pnoise.glsl"
 
 void main() {
   vec3 pos = position;

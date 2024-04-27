@@ -11,7 +11,7 @@ void main() {
   if (d > 0.5)
     discard;
 
-  gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+  gl_FragColor = vec4(v_color, 1.0);
 
 #include <colorspace_fragment>
 #include <tonemapping_fragment>

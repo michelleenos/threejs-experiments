@@ -41,7 +41,7 @@ void main() {
   // pos.y = 1.0 - pos.y;
   // pos.xy += vec2(-0.5, 0.5);
   uv.y = 1.0 - uv.y;
-  v_col = vec3(u_mouse.x, u_mouse.y, 0.0);
+  v_col = vec3(uv.y, uv.x, 1.0 - uv.y);
   pos.xy = uv * u_planeRes.x - 0.5;
 
   vec4 modelPosition = modelMatrix * vec4(pos, 1.0);

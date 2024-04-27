@@ -3,8 +3,8 @@ import { ParticleSheetBase } from './particle-sheet-base'
 import * as THREE from 'three'
 import '../style.css'
 
-const getGlsl = async (folder: string, file: string) => {
-   return await import(`./glsl/${folder}/${file}.glsl`).then((m) => m.default)
+const getGlsl = async (name: string, stage: string) => {
+   return await import(`./glsl/${name}.${stage}`).then((m) => m.default)
 }
 
 const base = new ParticleSheetBase({
@@ -156,8 +156,8 @@ const base = new ParticleSheetBase({
                   },
                },
                material: {
-                  vertexShader: await getGlsl('circles', 'vert1'),
-                  fragmentShader: await getGlsl('circles', 'frag1'),
+                  vertexShader: await getGlsl('circles', 'vert'),
+                  fragmentShader: await getGlsl('circles', 'frag'),
                   uniforms: [
                      ['scaleBase', 0.014, 0, 0.1, 0.0001],
                      // ['waves', 3, 0, 10, 0.1],
@@ -190,8 +190,8 @@ const base = new ParticleSheetBase({
                   },
                },
                material: {
-                  vertexShader: await getGlsl('circles', 'vert1'),
-                  fragmentShader: await getGlsl('circles', 'frag1'),
+                  vertexShader: await getGlsl('circles', 'vert'),
+                  fragmentShader: await getGlsl('circles', 'frag'),
                   uniforms: [
                      ['scaleBase', 0.014, 0, 0.1, 0.0001],
                      ['curve', 5.5, 0, 20, 0.1],
