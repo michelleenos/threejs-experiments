@@ -162,10 +162,12 @@ export default class Experience {
       this.world.camera.position.copy(this.cameraPosDefault)
       this.world.camera.far = 200
       this.world.camera.updateProjectionMatrix()
-      this.world.controls.maxPolarAngle = Math.PI * 0.5
-      this.world.controls.minPolarAngle = Math.PI * 0
-      this.world.controls.enableZoom = false
-      this.world.controls.enabled = false
+      if (this.world.controls) {
+         this.world.controls.maxPolarAngle = Math.PI * 0.5
+         this.world.controls.minPolarAngle = Math.PI * 0
+         this.world.controls.enableZoom = false
+         this.world.controls.enabled = false
+      }
    }
 
    onWheel = (e: WheelEvent) => {
