@@ -1,0 +1,1 @@
+const s=(p,f,r)=>{const i=document.createElement(p);if(f)for(let e in f)i.setAttribute(e,f[e]);return r&&(typeof r=="string"?i.innerHTML=r:Array.isArray(r)?r.forEach(e=>{e&&(typeof e=="string"?i.appendChild(s("div",{},e)):i.appendChild(e))}):i.appendChild(r)),i};export{s as c};
