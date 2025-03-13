@@ -194,12 +194,16 @@ export class BrainScene {
             )
         }
         this.world.camera.lookAt(0, 0, 0)
-        this.world.camera.updateProjectionMatrix()
 
         window.requestAnimationFrame(this.tick)
     }
 
-    animate = () => {
+    start = () => {
+        this.world.camera.position.set(
+            this.camPos.x - this.moveAmount * 2,
+            this.camPos.y - this.moveAmount * 1,
+            this.camPos.z - this.moveAmount * 4
+        )
         window.requestAnimationFrame(this.tick)
     }
 }

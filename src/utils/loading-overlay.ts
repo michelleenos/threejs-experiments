@@ -1,27 +1,31 @@
 import * as THREE from 'three'
 
 const createElement = (
-   tag: string,
-   atts: { [key: string]: any } = {},
-   children: (string | Element)[] = []
+    tag: string,
+    atts: { [key: string]: any } = {},
+    children: (string | Element)[] = []
 ) => {
-   const el = document.createElement(tag)
-   Object.keys(atts).forEach((key) => {
-      el.setAttribute(key, atts[key])
-   })
-   children.forEach((child) => {
-      el.appendChild(typeof child === 'string' ? document.createTextNode(child) : child)
-   })
-   return el
+    const el = document.createElement(tag)
+    Object.keys(atts).forEach((key) => {
+        el.setAttribute(key, atts[key])
+    })
+    children.forEach((child) => {
+        el.appendChild(typeof child === 'string' ? document.createTextNode(child) : child)
+    })
+    return el
 }
 
-const styles = `
+type LoaderStylesOptions = {
+    barColor?: string
+    bgColor?: string
+}
+const loaderStyles = ({ barColor = '#ff8a2b', bgColor = '#000000' }: LoaderStylesOptions = {}) => `
 .loader__bar {
    position: fixed;
    z-index: 100;
    width: 100%;
    height: 10px;
-   background: #ff8a2b;
+   background: ${barColor};
    left: 0;
    bottom: 0;
    transition: transform 0.5s ease-out; 
@@ -34,10 +38,10 @@ const styles = `
    z-index: 99;
    width: 100%;
    height: 100%;
-   background: #000;
+   background: ${bgColor};
    left: 0;
    top: 0;
-   transition: opacity 0.8s ease-in-out;
+   transition: opacity 0.7s ease-in-out;
 }
 
 .loader--finished .loader__bar,
@@ -49,42 +53,46 @@ const styles = `
 }
 `
 
+type LoaderOpts = {
+    onReady?: () => void
+    styles?: LoaderStylesOptions
+}
+
 export default class Loader {
-   manager: THREE.LoadingManager
-   cover: HTMLElement
-   bar: HTMLElement
-   container: HTMLElement
-   style: HTMLElement
-   onReady?: () => any
+    manager: THREE.LoadingManager
+    cover: HTMLElement
+    bar: HTMLElement
+    container: HTMLElement
+    style: HTMLElement
+    onReady?: () => any
 
-   constructor(onReady?: () => any) {
-      this.onReady = onReady
-      this.manager = new THREE.LoadingManager(this.onFinished, this.onProgress)
+    constructor({ onReady, styles }: LoaderOpts = {}) {
+        this.onReady = onReady
+        this.manager = new THREE.LoadingManager(this.onFinished, this.onProgress)
 
-      this.bar = createElement('div', { class: 'loader__bar' })
-      this.cover = createElement('div', { class: 'loader__cover' })
-      this.container = createElement('div', { class: 'loader' }, [this.bar, this.cover])
-      this.style = createElement('style', {}, [styles])
-      document.body.append(this.container, this.style)
-   }
+        this.bar = createElement('div', { class: 'loader__bar' })
+        this.cover = createElement('div', { class: 'loader__cover' })
+        this.container = createElement('div', { class: 'loader' }, [this.bar, this.cover])
+        this.style = createElement('style', {}, [loaderStyles(styles)])
+        document.body.append(this.container, this.style)
+    }
 
-   onFinished = () => {
-      window.setTimeout(() => {
-         this.cover.style.opacity = '0'
-         if (this.onReady) this.onReady()
-      }, 1000)
+    onFinished = () => {
+        window.setTimeout(() => {
+            this.cover.style.opacity = '0'
+            if (this.onReady) this.onReady()
+        }, 1000)
 
-      window.setTimeout(() => {
-         this.bar.style.transform = 'scaleX(0)'
-         this.bar.style.transformOrigin = 'right'
-      }, 800)
+        window.setTimeout(() => {
+            this.bar.style.transformOrigin = 'right'
+            this.bar.style.transform = 'scaleX(0)'
+        }, 800)
 
-      this.container.classList.add('loader--finished')
-   }
+        this.container.classList.add('loader--finished')
+    }
 
-   onProgress = (_: any, itemsLoaded: number, itemsTotal: number) => {
-      const progress = itemsLoaded / itemsTotal
-      console.log(progress)
-      this.bar.style.transform = `scaleX(${progress})`
-   }
+    onProgress = (_: any, itemsLoaded: number, itemsTotal: number) => {
+        const progress = itemsLoaded / itemsTotal
+        this.bar.style.transform = `scaleX(${progress})`
+    }
 }
