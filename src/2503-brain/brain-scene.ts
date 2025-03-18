@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { map } from '~/utils'
 import Mouse from '~/utils/Mouse'
-import Sizes from '~/utils/sizes'
+import Sizes from '~/utils/Sizes'
 import World from '~/utils/World'
 import { vertexColorsGradient } from './vertex-colors-gradient'
 
@@ -60,6 +60,8 @@ export class BrainScene {
         this.setVertexColors()
 
         this.brain = new THREE.Mesh(this.brainGeo, this.phongMat)
+        this.brain.castShadow = true
+        this.brain.receiveShadow = true
         this.makeDirLights(dirLightInfo || dirLightInfoDefaults)
 
         this.world.scene.add(this.brain)
@@ -127,6 +129,7 @@ export class BrainScene {
         lightInfo.forEach(({ x, y, z, intensity }, i) => {
             let light = new THREE.DirectionalLight('#ffffff', intensity)
             light.position.set(x, y, z)
+            light.castShadow = true
             this.world.scene.add(light)
             let helperColor = colors[i % 3]
 

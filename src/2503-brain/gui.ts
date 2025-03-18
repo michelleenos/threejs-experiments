@@ -8,6 +8,7 @@ export class BrainGui {
         clearColor: string
         lightHelpers: boolean
         phongSpecular: string
+        lightsCastShadow: boolean
         phongColor: string
         phongEmissive: string
     }
@@ -24,6 +25,7 @@ export class BrainGui {
         this.debg = {
             clearColor: clear.getHexString(),
             lightHelpers: false,
+            lightsCastShadow: true,
             phongSpecular: this.br.phongMat.specular.getHexString(),
             phongColor: this.br.phongMat.color.getHexString(),
             phongEmissive: this.br.phongMat.emissive.getHexString(),
@@ -106,6 +108,12 @@ export class BrainGui {
                 this.br.dirLights.forEach((l) => (l.helper.visible = val))
             })
             .name('show helpers')
+
+        lFold.add(this.debg, 'lightsCastShadow').onChange((val: boolean) => {
+            this.br.dirLights.forEach((l) => {
+                l.instance.castShadow = val
+            })
+        })
 
         this.br.dirLights.forEach((l, i) => {
             let folder = lFold.addFolder(`light ${i + 1}`)

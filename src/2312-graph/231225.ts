@@ -1,8 +1,8 @@
 import '../style.css'
 import * as THREE from 'three'
 import { ParametricGeometry } from 'three/examples/jsm/Addons.js'
-import Sizes from '../utils/sizes'
-import Timer from '../utils/timer'
+import Sizes from '../utils/Sizes'
+import Timer from '../utils/Timer'
 import World from '../utils/World'
 import { GUI } from 'lil-gui'
 
@@ -15,12 +15,12 @@ world.renderer.shadowMap.type = THREE.PCFSoftShadowMap
 world.camera.position.set(0, 10, 100)
 
 const params = {
-   xMin: -10,
-   xMax: 10,
-   yMin: -10,
-   yMax: 10,
-   stacks: 100,
-   slices: 100,
+    xMin: -10,
+    xMax: 10,
+    yMin: -10,
+    yMax: 10,
+    stacks: 100,
+    slices: 100,
 }
 
 // Lights
@@ -43,22 +43,22 @@ directionalLight.shadow.camera.updateProjectionMatrix()
 
 // Geometries
 const material = new THREE.MeshLambertMaterial({
-   color: '#fff',
-   // vertexColors: true,
-   // vertexShader,
-   // fragmentShader,
-   side: THREE.DoubleSide,
+    color: '#fff',
+    // vertexColors: true,
+    // vertexShader,
+    // fragmentShader,
+    side: THREE.DoubleSide,
 })
 const graphGeometry = new ParametricGeometry(
-   (u, v, target) => {
-      const x = u * (params.xMax - params.xMin) + params.xMin
-      const y = v * (params.yMax - params.yMin) + params.yMin
-      // const z = Math.sin(x * y)
-      const z = Math.sqrt(x * x + y * y)
-      target.set(x, y, z)
-   },
-   100,
-   100
+    (u, v, target) => {
+        const x = u * (params.xMax - params.xMin) + params.xMin
+        const y = v * (params.yMax - params.yMin) + params.yMin
+        // const z = Math.sin(x * y)
+        const z = Math.sqrt(x * x + y * y)
+        target.set(x, y, z)
+    },
+    100,
+    100
 )
 const graph = new THREE.Mesh(graphGeometry, material)
 graph.castShadow = true
@@ -77,17 +77,17 @@ graphFolder.add(params, 'stacks', 0, 200).step(1)
 graphFolder.add(params, 'slices', 0, 200).step(1)
 
 graphFolder.onFinishChange(() => {
-   graph.geometry.dispose()
-   graph.geometry = new ParametricGeometry(
-      (u, v, target) => {
-         const x = u * (params.xMax - params.xMin) + params.xMin
-         const y = v * (params.yMax - params.yMin) + params.yMin
-         const z = Math.sqrt(x * x + y * y)
-         target.set(x, y, z)
-      },
-      params.slices,
-      params.stacks
-   )
+    graph.geometry.dispose()
+    graph.geometry = new ParametricGeometry(
+        (u, v, target) => {
+            const x = u * (params.xMax - params.xMin) + params.xMin
+            const y = v * (params.yMax - params.yMin) + params.yMin
+            const z = Math.sqrt(x * x + y * y)
+            target.set(x, y, z)
+        },
+        params.slices,
+        params.stacks
+    )
 })
 
 // Helpers
@@ -116,14 +116,14 @@ lightPosFolder.add(directionalLight.position, 'z', -50, 50)
 // lightShadowFolder.add(directionalLight.shadow.camera, 'top', -100, 100)
 // lightShadowFolder.add(directionalLight.shadow.camera, 'bottom', -100, 100)
 lightPosFolder.onChange(() => {
-   directionalLight.lookAt(new THREE.Vector3(0, 0, 0))
-   // directionalLight.shadow.camera.updateProjectionMatrix()
-   // directionalLightCameraHelper.update()
+    directionalLight.lookAt(new THREE.Vector3(0, 0, 0))
+    // directionalLight.shadow.camera.updateProjectionMatrix()
+    // directionalLightCameraHelper.update()
 })
 // lightShadowFolder.add(directionalLight.shadow, 'radius', 0, 100)
 
 function animate() {
-   world.render()
+    world.render()
 }
 
 timer.on('tick', animate)

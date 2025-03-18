@@ -2,7 +2,7 @@ import '../style.css'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/Addons.js'
 import World from '../utils/World'
-import Sizes from '../utils/sizes'
+import Sizes from '../utils/Sizes'
 import GUI from 'lil-gui'
 import portalVertex from './glsl/portal/vertex.glsl'
 import portalFragment from './glsl/portal/fragment.glsl'
@@ -23,10 +23,10 @@ world.camera.updateProjectionMatrix()
 world.renderer.outputColorSpace = THREE.SRGBColorSpace
 
 if (world.controls) {
-   world.controls.minPolarAngle = 0
-   world.controls.maxPolarAngle = Math.PI / 2 - 0.1
-   world.controls.maxDistance = 20
-   world.controls.minDistance = 1
+    world.controls.minPolarAngle = 0
+    world.controls.maxPolarAngle = Math.PI / 2 - 0.1
+    world.controls.maxDistance = 20
+    world.controls.minDistance = 1
 }
 
 /**
@@ -50,20 +50,20 @@ const bakedMaterial = new THREE.MeshBasicMaterial({ map: bakedTexture })
 
 const poleLightMaterial = new THREE.MeshBasicMaterial({ color: '#ffe3d1' })
 const portalLightMaterial = new THREE.ShaderMaterial({
-   vertexShader: portalVertex,
-   fragmentShader: portalFragment,
-   uniforms: {
-      uTime: { value: 0 },
-      uColorStart: { value: new THREE.Color('#ffbdc2') },
-      uColorEnd: { value: new THREE.Color('#fffaff') },
-      uSpiralTightness: { value: 0.45 },
-      uWaveSpeed: { value: 0.2 },
-      uSpiralSpeed: { value: 0.45 },
-      uBlur: { value: 0.43 },
-      uGlowStart: { value: 0.29 },
-      uGlowEnd: { value: 0.95 },
-      uDiv: { value: 0.34 },
-   },
+    vertexShader: portalVertex,
+    fragmentShader: portalFragment,
+    uniforms: {
+        uTime: { value: 0 },
+        uColorStart: { value: new THREE.Color('#ffbdc2') },
+        uColorEnd: { value: new THREE.Color('#fffaff') },
+        uSpiralTightness: { value: 0.45 },
+        uWaveSpeed: { value: 0.2 },
+        uSpiralSpeed: { value: 0.45 },
+        uBlur: { value: 0.43 },
+        uGlowStart: { value: 0.29 },
+        uGlowEnd: { value: 0.95 },
+        uDiv: { value: 0.34 },
+    },
 })
 
 /**
@@ -76,21 +76,21 @@ const fireflies = new Fireflies(world)
  * Model
  */
 gltfLoader.load(baseUrl + '/scenes/portal/portal-merged.glb', (gltf) => {
-   const portalScene = gltf.scene
+    const portalScene = gltf.scene
 
-   portalScene.traverse((child) => {
-      child instanceof THREE.Mesh && (child.material = bakedMaterial)
-   })
+    portalScene.traverse((child) => {
+        child instanceof THREE.Mesh && (child.material = bakedMaterial)
+    })
 
-   const poleLightAMesh = portalScene.children.find((child) => child.name === 'poleLightA')
-   const poleLightBMesh = portalScene.children.find((child) => child.name === 'poleLightB')
-   const portalLightMesh = portalScene.children.find((child) => child.name === 'portalLight')
+    const poleLightAMesh = portalScene.children.find((child) => child.name === 'poleLightA')
+    const poleLightBMesh = portalScene.children.find((child) => child.name === 'poleLightB')
+    const portalLightMesh = portalScene.children.find((child) => child.name === 'portalLight')
 
-   poleLightAMesh instanceof THREE.Mesh && (poleLightAMesh.material = poleLightMaterial)
-   poleLightBMesh instanceof THREE.Mesh && (poleLightBMesh.material = poleLightMaterial)
-   portalLightMesh instanceof THREE.Mesh && (portalLightMesh.material = portalLightMaterial)
+    poleLightAMesh instanceof THREE.Mesh && (poleLightAMesh.material = poleLightMaterial)
+    poleLightBMesh instanceof THREE.Mesh && (poleLightBMesh.material = poleLightMaterial)
+    portalLightMesh instanceof THREE.Mesh && (portalLightMesh.material = portalLightMaterial)
 
-   world.scene.add(portalScene)
+    world.scene.add(portalScene)
 })
 
 /**
@@ -98,32 +98,32 @@ gltfLoader.load(baseUrl + '/scenes/portal/portal-merged.glb', (gltf) => {
  */
 
 const debg = {
-   poleLightColor: poleLightMaterial.color.getHexString(),
-   clearColor: '#160e14',
-   portalColorStart: portalLightMaterial.uniforms.uColorStart.value.getHexString(),
-   portalColorEnd: portalLightMaterial.uniforms.uColorEnd.value.getHexString(),
+    poleLightColor: poleLightMaterial.color.getHexString(),
+    clearColor: '#160e14',
+    portalColorStart: portalLightMaterial.uniforms.uColorStart.value.getHexString(),
+    portalColorEnd: portalLightMaterial.uniforms.uColorEnd.value.getHexString(),
 }
 world.renderer.setClearColor(debg.clearColor)
 gui.addColor(debg, 'clearColor').onChange((val: string) => {
-   world.renderer.setClearColor(val)
+    world.renderer.setClearColor(val)
 })
 gui.add(fireflies.material.uniforms.uSize, 'value', 0, 500, 1).name('firefliesSize')
 gui.addColor(debg, 'poleLightColor').onChange((val: string) => {
-   poleLightMaterial.color.set(val)
+    poleLightMaterial.color.set(val)
 })
 
 let portalFolder = gui.addFolder('portal')
 
 portalFolder.addColor(debg, 'portalColorStart').onChange((val: string) => {
-   portalLightMaterial.uniforms.uColorStart.value.set(val)
+    portalLightMaterial.uniforms.uColorStart.value.set(val)
 })
 portalFolder.addColor(debg, 'portalColorEnd').onChange((val: string) => {
-   portalLightMaterial.uniforms.uColorEnd.value.set(val)
+    portalLightMaterial.uniforms.uColorEnd.value.set(val)
 })
 
 portalFolder
-   .add(portalLightMaterial.uniforms.uSpiralTightness, 'value', 0, 1, 0.01)
-   .name('spiralTightness')
+    .add(portalLightMaterial.uniforms.uSpiralTightness, 'value', 0, 1, 0.01)
+    .name('spiralTightness')
 portalFolder.add(portalLightMaterial.uniforms.uWaveSpeed, 'value', 0, 2, 0.01).name('waveSpeed')
 portalFolder.add(portalLightMaterial.uniforms.uSpiralSpeed, 'value', 0, 2, 0.01).name('spiralSpeed')
 portalFolder.add(portalLightMaterial.uniforms.uBlur, 'value', 0, 1, 0.01).name('blur')
@@ -134,13 +134,13 @@ portalFolder.add(portalLightMaterial.uniforms.uDiv, 'value', 0.01, 1, 0.01).name
 gui.close()
 
 const animate = () => {
-   const time = clock.getElapsedTime()
+    const time = clock.getElapsedTime()
 
-   portalLightMaterial.uniforms.uTime.value = time
-   fireflies.tick(time)
-   world.render()
+    portalLightMaterial.uniforms.uTime.value = time
+    fireflies.tick(time)
+    world.render()
 
-   window.requestAnimationFrame(animate)
+    window.requestAnimationFrame(animate)
 }
 
 window.requestAnimationFrame(animate)
