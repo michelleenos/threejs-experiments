@@ -4,7 +4,7 @@ import { FlyControls, GLTFLoader } from 'three/examples/jsm/Addons.js'
 import '../style.css'
 import World from '../utils/World'
 import { DataView } from '../utils/data-view'
-import Sizes from '../utils/sizes'
+import Sizes from '../utils/Sizes'
 import GeoParticles from './geo-particles'
 import { buildGui, makeDataView } from './gui'
 import { DNAScroll } from './scroll-positions'
@@ -13,7 +13,7 @@ let particles: GeoParticles
 let scroller: DNAScroll
 
 const sizes = new Sizes()
-const world = new World(sizes, false)
+const world = new World(sizes)
 world.renderer.outputColorSpace = THREE.SRGBColorSpace
 // @ts-ignore
 window.world = world
@@ -32,37 +32,37 @@ const data = new DataView().hide()
 const baseUrl = import.meta.env.DEV ? '' : import.meta.env.BASE_URL
 const gltfLoader = new GLTFLoader()
 gltfLoader.load(baseUrl + '/scenes/dna/dna-2-painted.glb', (gltf) => {
-   let object = gltf.scene?.children?.[0]
-   if (!(object instanceof THREE.Mesh)) return
+    let object = gltf.scene?.children?.[0]
+    if (!(object instanceof THREE.Mesh)) return
 
-   particles = new GeoParticles(object, world)
-   afterLoad()
+    particles = new GeoParticles(object, world)
+    afterLoad()
 })
 
 const afterLoad = () => {
-   particles.cloud.rotateX(Math.PI / 2)
-   particles.cloud.rotateZ(Math.PI / 2)
-   world.scene.add(particles.cloud)
+    particles.cloud.rotateX(Math.PI / 2)
+    particles.cloud.rotateZ(Math.PI / 2)
+    world.scene.add(particles.cloud)
 
-   const container = document.querySelector<HTMLElement>('.page-content')!
-   scroller = new DNAScroll(container, world, particles)
-   particles.onResize()
+    const container = document.querySelector<HTMLElement>('.page-content')!
+    scroller = new DNAScroll(container, world, particles)
+    particles.onResize()
 
-   buildGui(gui, world, particles, controls, scroller)
-   makeDataView(data, world, particles, scroller)
+    buildGui(gui, world, particles, controls, scroller)
+    makeDataView(data, world, particles, scroller)
 }
 
 const animate = () => {
-   const delta = clock.getDelta()
-   const time = clock.getElapsedTime()
+    const delta = clock.getDelta()
+    const time = clock.getElapsedTime()
 
-   if (particles) particles.tick(time)
-   controls.update(delta)
+    if (particles) particles.tick(time)
+    controls.update(delta)
 
-   data.update()
-   world.render()
+    data.update()
+    world.render()
 
-   window.requestAnimationFrame(animate)
+    window.requestAnimationFrame(animate)
 }
 
 window.requestAnimationFrame(animate)

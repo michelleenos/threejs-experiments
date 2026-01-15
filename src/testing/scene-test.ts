@@ -29,25 +29,34 @@ const textureLoader = new THREE.TextureLoader(loader.manager)
  */
 const ambientLight = new THREE.AmbientLight('#ffffff', 0.5)
 const dirLight = new THREE.DirectionalLight('#ffffff', 2.5)
-// dirLight.position.set(2, 2, 2)
-// world.scene.add(ambientLight, dirLight)
+dirLight.position.set(2, 2, 2)
+world.scene.add(ambientLight, dirLight)
 
 /**
  * Model
  */
 const baseUrl = import.meta.env.DEV ? '' : import.meta.env.BASE_URL
 
-const bakedTexture = textureLoader.load(baseUrl + '/scenes/trees/baked.jpg')
-bakedTexture.flipY = false
-bakedTexture.colorSpace = THREE.SRGBColorSpace
-const bakedMaterial = new THREE.MeshBasicMaterial({ map: bakedTexture })
+// const bakedTexture = textureLoader.load(baseUrl + '/scenes/trees/baked.jpg')
+// bakedTexture.flipY = false
+// bakedTexture.colorSpace = THREE.SRGBColorSpace
+// const bakedMaterial = new THREE.MeshBasicMaterial({ map: bakedTexture })
 
-gltfLoader.load(baseUrl + '/scenes/trees/pinetree001-simplified-unwrapped.glb', (gltf) => {
-    gltf.scene.traverse((child) => {
-        if (child instanceof THREE.Mesh) {
-            child.material = bakedMaterial
-        }
-    })
+// gltfLoader.load(baseUrl + '/scenes/trees/pinetree001-simplified-unwrapped.glb', (gltf) => {
+//     gltf.scene.traverse((child) => {
+//         if (child instanceof THREE.Mesh) {
+//             child.material = bakedMaterial
+//         }
+//     })
+//     world.scene.add(gltf.scene)
+// })
+
+gltfLoader.load(baseUrl + '/scenes/isometric-bedroom.glb', (gltf) => {
+    // gltf.scene.traverse((child) => {
+    //     if (child instanceof THREE.Mesh) {
+    //         child.material.side = THREE.DoubleSide
+    //     }
+    // })
     world.scene.add(gltf.scene)
 })
 
@@ -56,7 +65,7 @@ gltfLoader.load(baseUrl + '/scenes/trees/pinetree001-simplified-unwrapped.glb', 
  */
 
 const debg = {
-    clearColor: '#0e0033',
+    clearColor: '#fbe3e3ff',
 }
 world.renderer.setClearColor(debg.clearColor)
 
