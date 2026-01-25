@@ -2,216 +2,324 @@ import * as THREE from 'three'
 import { map, fract } from '../utils'
 import { easing } from '../utils/easings'
 import World from '../utils/World'
+import { ringsSceneAssets } from './assets'
 
-export type RingsFn = (pos: number, d?: number) => number
-export const ringsFns: RingsFn[] = [
-   (pos: number) => Math.cos(pos * 2),
-   (pos: number) => Math.sin(pos * 2),
-   (pos: number) => Math.sin(pos),
-   (pos: number) => Math.cos(pos),
-   (pos: number, d: number = 0.2) => Math.cos(Math.sin(pos) * d),
-]
+const { matcaps } = ringsSceneAssets
 
-export type RingsOpts = {
-   count?: number
-   space?: number
-   thickness?: number
-   radius?: number
-   opacity?: number
-   easingTime?: keyof typeof easing
-   easingShape?: keyof typeof easing
-   scaleFn?: RingsFn
-   posFn?: RingsFn
-   rotateSpeed?: THREE.Vector3
-   speed?: number
-   coverAmt?: number
-   initRotation?: THREE.Vector3
-   matcap: THREE.Texture
+export type RingFn = 'sin' | 'cos' | 'cos-sin'
+const ringFns: Record<RingFn, (val: number, scale: number) => number> = {
+    cos: (val: number, scale: number) => Math.cos(val * scale),
+    sin: (val: number, scale: number) => Math.sin(val * scale),
+    'cos-sin': (val: number, scale: number) => Math.cos(Math.sin(val) * scale),
 }
 
-export default class Rings {
-   world: World
-   meshes: THREE.Mesh[] = []
-   scaleFn: RingsFn = ringsFns[0]
-   posFn: RingsFn = ringsFns[2]
-   easingShape: keyof typeof easing = 'linear'
-   easingTime: keyof typeof easing = 'linear'
-   material: THREE.MeshMatcapMaterial
-   group: THREE.Group
-   rotateSpeed: THREE.Vector3
-   coverAmt: number = 1
-   initRotation: THREE.Vector3 = new THREE.Vector3(0, 0, 0)
-   _opacity: number = 0.5
-   _thickness = 0.02
-   _count = 30
-   _radius = 4
-   scaleVar = 2
-   speed = 1
+export type RingsOpts = {
+    count?: number
+    speed?: number
+    radius?: number
+    opacity?: number
+    thickness?: number
+    coverAmt?: number
+    initRotation?: { x: number; y: number; z: number }
+    rotateSpeed?: { x: number; y: number; z: number }
+    blending?: THREE.Blending
+    easingShape?: keyof typeof easing
+    scaleFn?: RingFn
+    posFn?: RingFn
+    posFnVar?: number
+    scaleFnVar?: number
+    matcapName?: keyof typeof matcaps
+    visible?: boolean
+    radialSegments?: number
+    tubularSegments?: number
+}
 
-   constructor(
-      world: World,
-      {
-         count = 30,
-         thickness = 0.02,
-         radius = 4,
-         opacity = 0.5,
-         scaleFn = ringsFns[0],
-         posFn = ringsFns[2],
-         rotateSpeed = new THREE.Vector3(0, 0, 0),
-         speed = 1,
-         initRotation = new THREE.Vector3(0, 0, 0),
-         easingTime,
-         easingShape,
-         matcap,
-         coverAmt = 1,
-      }: RingsOpts
-   ) {
-      this._count = count
-      this._thickness = thickness
-      this._radius = radius
-      this._opacity = opacity
-      this.scaleFn = scaleFn
-      this.posFn = posFn
-      this.rotateSpeed = rotateSpeed
-      this.world = world
-      this.speed = speed
-      this.coverAmt = coverAmt
-      this.initRotation = initRotation
-      easingTime && (this.easingTime = easingTime)
-      easingShape && (this.easingShape = easingShape)
+export const ringsDefaults: Required<RingsOpts> = {
+    count: 30,
+    speed: 0.1,
+    radius: 4,
+    opacity: 1,
+    thickness: 0.02,
+    coverAmt: 1,
+    initRotation: { x: 0, y: 0, z: 0 },
+    rotateSpeed: { x: 0, y: 0, z: 0 },
+    blending: 1,
+    easingShape: 'linear',
+    scaleFn: 'cos',
+    posFn: 'sin',
+    scaleFnVar: 1,
+    posFnVar: 1,
+    matcapName: 'blueish',
+    visible: true,
+    radialSegments: 10,
+    tubularSegments: 30,
+}
 
-      this.group = new THREE.Group()
+export default class Rings extends THREE.Group {
+    meshes: THREE.Mesh[] = []
+    scaleFn: RingFn
+    posFn: RingFn
+    posFnVar: number
+    scaleFnVar: number
+    easingShape: keyof typeof easing
+    material: THREE.MeshMatcapMaterial
+    rotateSpeed: THREE.Vector3
+    coverAmt: number
+    initRotation: THREE.Vector3 = new THREE.Vector3(0, 0, 0)
+    _thickness: number
+    _count: number
+    _radius: number
+    _radialSegments: number
+    _tubularSegments: number
+    speed: number
+    _matcapName: keyof typeof matcaps
 
-      this.material = new THREE.MeshMatcapMaterial({
-         color: '#fff',
-         matcap,
-         transparent: true,
-         side: THREE.DoubleSide,
-         opacity: this.opacity,
-      })
-      this.setupMeshes()
-   }
+    constructor(opts: RingsOpts = {}) {
+        super()
+        const {
+            count,
+            thickness,
+            radius,
+            opacity,
+            scaleFn,
+            posFn,
+            scaleFnVar,
+            posFnVar,
+            speed,
+            coverAmt,
+            rotateSpeed,
+            initRotation,
+            easingShape,
+            blending,
+            matcapName,
+            visible,
+            radialSegments,
+            tubularSegments,
+        } = { ...ringsDefaults, ...opts }
 
-   set visible(value: boolean) {
-      this.group.visible = value
-   }
+        this._count = count
+        this._thickness = thickness
+        this._radius = radius
+        this._radialSegments = radialSegments
+        this._tubularSegments = tubularSegments
+        this._matcapName = matcapName
+        this.scaleFn = scaleFn
+        this.posFn = posFn
+        this.posFnVar = posFnVar
+        this.scaleFnVar = scaleFnVar
+        this.speed = speed
+        this.coverAmt = coverAmt
+        this.rotateSpeed = new THREE.Vector3(
+            rotateSpeed.x,
+            rotateSpeed.y,
+            rotateSpeed.z,
+        )
+        this.initRotation = new THREE.Vector3(
+            initRotation.x,
+            initRotation.y,
+            initRotation.z,
+        )
+        this.easingShape = easingShape
+        this.visible = visible
 
-   get visible() {
-      return this.group.visible
-   }
+        this.material = new THREE.MeshMatcapMaterial({
+            color: '#fff',
+            matcap: matcaps[this._matcapName],
+            transparent: true,
+            side: THREE.DoubleSide,
+            opacity,
+            blending,
+        })
+        this.createRings()
+    }
 
-   get blending() {
-      return this.material.blending
-   }
+    updateMaterial = () => {
+        this.material.matcap = matcaps[this._matcapName]
+    }
 
-   set blending(value: THREE.Blending) {
-      this.material.blending = value
-   }
+    set matcapName(name: keyof typeof matcaps) {
+        this._matcapName = name
+        this.material.matcap = matcaps[this._matcapName]
+    }
 
-   get opacity() {
-      return this._opacity
-   }
+    get matcapName() {
+        return this._matcapName
+    }
 
-   set opacity(value: number) {
-      this._opacity = value
-      this.material.opacity = value
-   }
+    get blending() {
+        return this.material.blending
+    }
 
-   get radius() {
-      return this._radius
-   }
+    set blending(value: THREE.Blending) {
+        this.material.blending = value
+    }
 
-   set radius(value: number) {
-      this._radius = value
-      this.setupMeshes()
-   }
+    get opacity() {
+        return this.material.opacity
+    }
 
-   get count() {
-      return this._count
-   }
+    set opacity(value: number) {
+        this.material.opacity = value
+    }
 
-   set count(value: number) {
-      this._count = value
-      this.setupMeshes()
-   }
+    get radius() {
+        return this._radius
+    }
 
-   get thickness() {
-      return this._thickness
-   }
+    set radius(value: number) {
+        this._radius = value
+        this.createRings()
+    }
 
-   set thickness(value: number) {
-      this._thickness = value
-      this.setupMeshes()
-   }
+    get count() {
+        return this._count
+    }
 
-   setupMeshes() {
-      if (this.meshes.length > 0) {
-         this.meshes.forEach((mesh) => {
-            this.world.scene.remove(mesh)
-            this.group.remove(mesh)
-            mesh.geometry.dispose()
-         })
-      }
+    set count(value: number) {
+        this._count = value
+        this.createRings()
+    }
 
-      this.meshes = []
+    get thickness() {
+        return this._thickness
+    }
 
-      for (let i = 0; i < this._count; i++) {
-         const geometry = new THREE.TorusGeometry(this._radius, this._thickness, 20, 100)
-         const mesh = new THREE.Mesh(geometry, this.material)
-         mesh.rotateX(Math.PI / 2)
-         this.meshes.push(mesh)
-      }
+    set thickness(value: number) {
+        this._thickness = value
+        this.createRings()
+    }
 
-      this.group.add(...this.meshes)
-      this.world.scene.add(this.group)
-   }
+    get radialSegments() {
+        return this._radialSegments
+    }
 
-   setColors() {
-      this.meshes.forEach((mesh, i) => {
-         const step = i / this._count
-         const positions = mesh.geometry.attributes.position as THREE.BufferAttribute
-         const count = positions.count
-         let colors = []
-         let color = new THREE.Color()
+    set radialSegments(val: number) {
+        this._radialSegments = val
+        this.createRings()
+    }
 
-         for (let j = 0; j < count; j++) {
-            let y = positions.getY(j)
+    get tubularSegments() {
+        return this._tubularSegments
+    }
 
-            // let r = map(x, this.radius * -1, this.radius, step, 1)
-            let r = step
-            let g = map(y, this._radius * -1, this._radius, 0, 1)
+    set tubularSegments(val: number) {
+        this._tubularSegments = val
+        this.createRings()
+    }
 
-            color.setRGB(r, g, 1 - step)
-            colors.push(color.r, color.g, color.b)
-         }
+    setFromOpts(o: RingsOpts) {
+        const opts: Required<RingsOpts> = { ...ringsDefaults, ...o }
+        this._count = opts.count
+        this._thickness = opts.thickness
+        this._radius = opts.radius
+        this._radialSegments = opts.radialSegments
+        this._tubularSegments = opts.tubularSegments
+        this._matcapName = opts.matcapName
+        this.material.opacity = opts.opacity
+        this.material.matcap = matcaps[opts.matcapName]
+        this.scaleFn = opts.scaleFn
+        this.posFn = opts.posFn
+        this.posFnVar = opts.posFnVar
+        this.scaleFnVar = opts.scaleFnVar
+        this.speed = opts.speed
+        this.coverAmt = opts.coverAmt
+        this.visible = opts.visible
+        this.rotateSpeed.set(
+            opts.rotateSpeed.x,
+            opts.rotateSpeed.y,
+            opts.rotateSpeed.z,
+        )
+        this.initRotation.set(
+            opts.initRotation.x,
+            opts.initRotation.y,
+            opts.initRotation.z,
+        )
+        this.easingShape = opts.easingShape
+        this.visible = opts.visible
+        this.createRings()
+        this.material.needsUpdate = true
+    }
 
-         mesh.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
-      })
-   }
+    createRings() {
+        if (this.meshes.length > 0) {
+            this.meshes.forEach((mesh) => {
+                this.remove(mesh)
+                mesh.geometry.dispose()
+            })
+        }
 
-   update(time: number) {
-      let posTime = time * 0.0001 * this.speed
+        this.meshes = []
 
-      const a = map(easing[this.easingTime](fract(posTime)), 0, 1, -1, 1)
+        for (let i = 0; i < this._count; i++) {
+            const geometry = new THREE.TorusGeometry(
+                this._radius,
+                this._thickness,
+                this._radialSegments,
+                this._tubularSegments,
+            )
+            const mesh = new THREE.Mesh(geometry, this.material)
+            mesh.rotateX(Math.PI / 2)
+            this.meshes.push(mesh)
+        }
 
-      this.meshes.forEach((mesh, i) => {
-         // const spaceVal = easing[this.easing](i / this.count) * this.maxSpace
-         // const pos = ((spaceVal + a) * Math.PI) % (Math.PI * 2)
-         const spaceVal = easing[this.easingShape](i / this.count) * this.coverAmt
-         let pos = (spaceVal + a) * (Math.PI * 2)
-         pos %= Math.PI * 2
+        this.add(...this.meshes)
+    }
 
-         mesh.position.y = this.posFn(pos) * this.radius
+    setColors() {
+        this.meshes.forEach((mesh, i) => {
+            const step = i / this._count
+            const positions = mesh.geometry.attributes
+                .position as THREE.BufferAttribute
+            const count = positions.count
+            let colors = []
+            let color = new THREE.Color()
 
-         // const scale = map(Math.cos(Math.sin(pos) * i * 0.5), -1, 1, 0.1, 1)
-         const scale = map(this.scaleFn(pos, this.scaleVar), -1, 1, 0.1, 1)
-         mesh.scale.set(scale, scale, scale)
-      })
+            for (let j = 0; j < count; j++) {
+                let y = positions.getY(j)
 
-      this.group.rotation.set(
-         this.initRotation.x + this.rotateSpeed.x * time,
-         this.initRotation.y + this.rotateSpeed.y * time,
-         this.initRotation.z + this.rotateSpeed.z * time
-      )
-   }
+                // let r = map(x, this.radius * -1, this.radius, step, 1)
+                let r = step
+                let g = map(y, this._radius * -1, this._radius, 0, 1)
+
+                color.setRGB(r, g, 1 - step)
+                colors.push(color.r, color.g, color.b)
+            }
+
+            mesh.geometry.setAttribute(
+                'color',
+                new THREE.Float32BufferAttribute(colors, 3),
+            )
+        })
+    }
+
+    update(time: number) {
+        let posTime = time * 0.0001 * this.speed
+
+        const a = map(fract(posTime), 0, 1, -1, 1)
+
+        this.meshes.forEach((mesh, i) => {
+            const spaceVal =
+                easing[this.easingShape](i / this.count) * this.coverAmt
+            let pos = (spaceVal + a) * (Math.PI * 2)
+            pos %= Math.PI * 2
+
+            // mesh.position.y = this.posFn(pos) * this.radius
+            mesh.position.y =
+                ringFns[this.posFn](pos, this.posFnVar) * this.radius
+            const scale = map(
+                ringFns[this.scaleFn](pos, this.scaleFnVar),
+                -1,
+                1,
+                0.1,
+                1,
+            )
+            mesh.scale.set(scale, scale, scale)
+        })
+
+        this.rotation.set(
+            this.initRotation.x + this.rotateSpeed.x * time * 0.001,
+            this.initRotation.y + this.rotateSpeed.y * time * 0.001,
+            this.initRotation.z + this.rotateSpeed.z * time * 0.001,
+        )
+    }
 }

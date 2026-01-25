@@ -1,133 +1,173 @@
 import * as THREE from 'three'
+import { ringsSceneAssets } from './assets'
 
+const { sprites } = ringsSceneAssets
 export type ParticlesOpts = {
-   count?: number
-   size?: number
-   color?: string
-   opacity?: number
-   radius?: number
+    count?: number
+    size?: number
+    color?: string
+    opacity?: number
+    radius?: number
+    spriteName?: keyof typeof sprites
+    position?: { x: number; y: number; z: number }
+    rotateSpeed?: { x: number; y: number; z: number }
+    blending?: THREE.Blending
 }
 
-export default class Particles {
-   geometry: THREE.BufferGeometry
-   positions!: Float32Array
-   material: THREE.PointsMaterial
-   mesh: THREE.Points
-   _count: number
-   texture: THREE.Texture
-   _color: THREE.Color
-   _size: number
-   _opacity: number
-   _radius: number
-   rotateSpeed: THREE.Vector3
+export const particlesDefaults: Required<ParticlesOpts> = {
+    count: 100,
+    size: 1,
+    opacity: 0.5,
+    color: '#ffffff',
+    radius: 10,
+    spriteName: 'smoke01',
+    rotateSpeed: { x: -0.0001, y: 0.0001, z: 0 },
+    position: { x: 0, y: 0, z: 0 },
+    blending: THREE.AdditiveBlending,
+}
 
-   constructor(
-      texture: THREE.Texture,
-      { count = 100, size = 1, opacity = 0.5, color = '#fff', radius = 10 }: ParticlesOpts = {}
-   ) {
-      this.texture = texture
-      this._count = count
-      this._size = size
-      this._color = new THREE.Color(color)
-      this._opacity = opacity
-      this._radius = radius
-      this.rotateSpeed = new THREE.Vector3(-0.0001, 0.0001, 0.0)
+export default class Particles extends THREE.Points<
+    THREE.BufferGeometry,
+    THREE.PointsMaterial
+> {
+    positions!: Float32Array
+    _count: number
+    _radius: number
+    _spriteName: keyof typeof sprites
+    rotateSpeed: THREE.Vector3
 
-      this.geometry = new THREE.BufferGeometry()
-      // this.positions = new Float32Array(this._count * 3)
+    constructor(opts: ParticlesOpts = {}, name?: string) {
+        super(new THREE.BufferGeometry(), new THREE.PointsMaterial())
+        const {
+            count,
+            size,
+            opacity,
+            color,
+            radius,
+            spriteName,
+            rotateSpeed,
+            position,
+            blending,
+        } = { ...particlesDefaults, ...opts }
+        this._count = count
+        this._radius = radius
+        this._spriteName = spriteName
 
-      this.setPositions()
+        this.size = size
+        this.opacity = opacity
+        this.color = color
+        this.material.blending = blending
 
-      this.material = new THREE.PointsMaterial()
-      this.setupMaterial()
-      this.mesh = new THREE.Points(this.geometry, this.material)
-   }
+        if (name) this.name = name
 
-   get radius() {
-      return this._radius
-   }
+        this.setPositions()
+        this.setupMaterial()
 
-   set radius(value: number) {
-      this._radius = value
-      this.setPositions()
-   }
+        this.rotateSpeed = new THREE.Vector3(
+            rotateSpeed.x,
+            rotateSpeed.y,
+            rotateSpeed.z,
+        )
+        this.position.set(position.x, position.y, position.z)
+    }
 
-   get opacity() {
-      return this._opacity
-   }
+    get radius() {
+        return this._radius
+    }
 
-   set opacity(value: number) {
-      this._opacity = value
-      this.setupMaterial()
-   }
+    set radius(value: number) {
+        this._radius = value
+        this.setPositions()
+    }
 
-   get color(): THREE.Color {
-      return this._color
-   }
+    get opacity() {
+        return this.material.opacity
+    }
 
-   set color(value: string | number | THREE.Color) {
-      this._color.set(value)
-      this.setupMaterial()
-   }
+    set opacity(value: number) {
+        this.material.opacity = value
+    }
 
-   get size() {
-      return this._size
-   }
+    get color(): string {
+        return `#${this.material.color.getHexString()}`
+    }
 
-   set size(value: number) {
-      this._size = value
-      this.setupMaterial()
-   }
+    set color(value: string) {
+        this.material.color.setStyle(value)
+    }
 
-   get count() {
-      return this._count
-   }
+    get spriteName() {
+        return this._spriteName
+    }
 
-   set count(value: number) {
-      this._count = value
-      this.setPositions()
-   }
+    set spriteName(name: keyof typeof sprites) {
+        this._spriteName = name
+        this.material.alphaMap = sprites[name]
+    }
 
-   getPointInSphere() {
-      let d, x, y, z
-      // https://karthikkaranth.me/blog/generating-random-points-in-a-sphere/
-      do {
-         x = Math.random() * 2 - 1
-         y = Math.random() * 2 - 1
-         z = Math.random() * 2 - 1
-         d = x * x + y * y + z * z
-      } while (d > 1)
-      return { x, y, z }
-   }
+    get size() {
+        return this.material.size
+    }
 
-   setPositions() {
-      this.positions = new Float32Array(this._count * 3)
-      for (let i = 0; i < this._count; i++) {
-         let point = this.getPointInSphere()
-         this.positions[i * 3 + 0] = point.x * this._radius
-         this.positions[i * 3 + 1] = point.y * this._radius
-         this.positions[i * 3 + 2] = point.z * this._radius
-      }
-      this.geometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3))
-   }
+    set size(value: number) {
+        this.material.size = value
+    }
 
-   setupMaterial() {
-      this.material.size = this._size
-      this.material.opacity = this._opacity
-      this.material.sizeAttenuation = true
-      this.material.depthWrite = false
-      this.material.transparent = true
-      this.material.alphaMap = this.texture
+    get count() {
+        return this._count
+    }
 
-      this.material.blending = THREE.AdditiveBlending
-      this.material.color = this._color
+    set count(value: number) {
+        this._count = value
+        this.setPositions()
+    }
 
-      this.material.needsUpdate = true
-   }
+    get blending() {
+        return this.material.blending
+    }
 
-   update() {
-      this.mesh.rotateX(this.rotateSpeed.x)
-      this.mesh.rotateY(this.rotateSpeed.y)
-      this.mesh.rotateZ(this.rotateSpeed.z)
-   }
+    set blending(val: THREE.Blending) {
+        this.material.blending = val
+    }
+
+    getPointInSphere() {
+        let d, x, y, z
+        // https://karthikkaranth.me/blog/generating-random-points-in-a-sphere/
+        do {
+            x = Math.random() * 2 - 1
+            y = Math.random() * 2 - 1
+            z = Math.random() * 2 - 1
+            d = x * x + y * y + z * z
+        } while (d > 1)
+        return { x, y, z }
+    }
+
+    setPositions() {
+        this.positions = new Float32Array(this._count * 3)
+        for (let i = 0; i < this._count; i++) {
+            let point = this.getPointInSphere()
+            this.positions[i * 3 + 0] = point.x * this._radius
+            this.positions[i * 3 + 1] = point.y * this._radius
+            this.positions[i * 3 + 2] = point.z * this._radius
+        }
+        this.geometry.setAttribute(
+            'position',
+            new THREE.BufferAttribute(this.positions, 3),
+        )
+    }
+
+    setupMaterial() {
+        this.material.sizeAttenuation = true
+        this.material.depthWrite = false
+        this.material.transparent = true
+        this.material.alphaMap = sprites[this._spriteName]
+
+        this.material.needsUpdate = true
+    }
+
+    update() {
+        this.rotateX(this.rotateSpeed.x)
+        this.rotateY(this.rotateSpeed.y)
+        this.rotateZ(this.rotateSpeed.z)
+    }
 }
