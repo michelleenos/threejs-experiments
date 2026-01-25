@@ -1,25 +1,24 @@
-import '../style.css'
+import GUI from 'lil-gui'
 import * as THREE from 'three'
+import { GuiExtra } from '~/utils/gui-extra'
+import '../style.css'
 import Sizes from '../utils/Sizes'
 import Timer from '../utils/Timer'
 import World from '../utils/World'
 import Rings, { RingsOpts } from './Rings'
-import GUI from 'lil-gui'
 import Particles from './SpaceParticles'
 import {
     getParticlesPreset,
     particlesPresets,
-    setParticlesFromPreset,
     PresetParticles,
+    setParticlesFromPreset,
 } from './particles-presets'
-import {
-    setRingsFromPreset,
-    ringsPresets,
-    getRingsPreset,
-} from './rings-presets'
 import { makeParticlesGui, makeRingsGui } from './rings-particles-gui'
-import { ringsSceneAssets } from './assets'
-import { GuiExtra } from '~/utils/gui-extra'
+import {
+    getRingsPreset,
+    ringsPresets,
+    setRingsFromPreset,
+} from './rings-presets'
 
 THREE.ColorManagement.enabled = true
 const timer = new Timer()
@@ -33,13 +32,7 @@ const particles = [
     new Particles({ spriteName: 'smoke01' }, 'smoke1'),
     new Particles({ spriteName: 'smoke02' }, 'smoke2'),
     new Particles({ spriteName: 'star01' }, 'star1'),
-    new Particles(
-        {
-            spriteName: 'star04',
-            rotateSpeed: { x: 0.0005, y: 0.0005, z: 0.0005 },
-        },
-        'star2',
-    ),
+    new Particles({ spriteName: 'star04' }, 'star2'),
 ]
 
 const rings = [new Rings(), new Rings()]
@@ -50,12 +43,12 @@ world.scene.add(...particles, ...rings)
  */
 
 const fog = new THREE.Fog('#120b45', 0, 20)
-world.scene.fog = fog
+// world.scene.fog = fog
 world.camera.position.set(0, 0, 10)
-world.controls!.maxDistance = 50
-world.controls!.enablePan = false
-world.renderer.toneMapping = THREE.ACESFilmicToneMapping
-world.renderer.toneMappingExposure = 3
+// world.controls!.maxDistance = 50
+// world.controls!.enablePan = false
+// world.renderer.toneMapping = THREE.ACESFilmicToneMapping
+// world.renderer.toneMappingExposure = 3
 
 /**
  * GUI
@@ -133,7 +126,7 @@ function buildGui() {
 
     const debg = {
         fogColor: fog.color.getStyle(),
-        fogEnabled: true,
+        fogEnabled: false,
     }
 
     rFold
@@ -160,8 +153,9 @@ buildGui()
  */
 
 function animate() {
-    rings.forEach((r) => r.update(timer.elapsed))
-    particles.forEach((p) => p.update())
+    const time = timer.elapsed
+    rings.forEach((r) => r.update(time))
+    particles.forEach((p) => p.update(time))
     world.render()
 }
 

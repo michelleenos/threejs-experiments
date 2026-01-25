@@ -123,7 +123,7 @@ export default class Rings extends THREE.Group {
         this.visible = visible
 
         this.material = new THREE.MeshMatcapMaterial({
-            color: '#fff',
+            color: '#ffffff',
             matcap: matcaps[this._matcapName],
             transparent: true,
             side: THREE.DoubleSide,

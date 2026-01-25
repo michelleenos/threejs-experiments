@@ -16,6 +16,9 @@ export const ringsSceneAssets = {
     matcaps: {
         blueish: getTex('/matcaps/blueish.png'),
         iridescent: getTex('/matcaps/iridescent.png'),
+        silvery: getTex('/matcaps/silvery-256px.png'),
+        shinyOrange: getTex('/matcaps/shiny-orange-256px.png'),
+        yellow: getTex('/matcaps/yellow-256px.png'),
     },
     sprites: {
         smoke01: getTex('/stars/smoke_01.png'),
