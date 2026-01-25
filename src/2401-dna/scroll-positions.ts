@@ -7,22 +7,25 @@ import Sizes from '../utils/Sizes'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const cameraSettings: { position: THREE.Vector3; rotation: THREE.Euler; target?: THREE.Vector3 }[] =
-    [
-        {
-            position: new THREE.Vector3(1.86, 1.11, 1.07),
-            rotation: new THREE.Euler(-0.98, 0.49, 0.61),
-            target: new THREE.Vector3(-0.28, -2.18, -1.16),
-        },
-        {
-            position: new THREE.Vector3(-5, -0.2, -0.6),
-            rotation: new THREE.Euler(-1.58, -1.1, -0.16),
-        },
-        {
-            position: new THREE.Vector3(-0.6, 2.28, -5.27),
-            rotation: new THREE.Euler(-2.57, -0.09, -1.43),
-        },
-    ]
+const cameraSettings: {
+    position: THREE.Vector3
+    rotation: THREE.Euler
+    target?: THREE.Vector3
+}[] = [
+    {
+        position: new THREE.Vector3(1.86, 1.11, 1.07),
+        rotation: new THREE.Euler(-0.98, 0.49, 0.61),
+        target: new THREE.Vector3(-0.28, -2.18, -1.16),
+    },
+    {
+        position: new THREE.Vector3(-5, -0.2, -0.6),
+        rotation: new THREE.Euler(-1.58, -1.1, -0.16),
+    },
+    {
+        position: new THREE.Vector3(-0.6, 2.28, -5.27),
+        rotation: new THREE.Euler(-2.57, -0.09, -1.43),
+    },
+]
 
 const particleSettings: { position: THREE.Vector3; rotation: THREE.Euler }[] = [
     {
@@ -60,7 +63,9 @@ export class DNAScroll {
         this.sizes = world.sizes
         this.particles = particles
 
-        this.sections = [...this.el.querySelectorAll<HTMLElement>('.section')].map((el) => ({
+        this.sections = [
+            ...this.el.querySelectorAll<HTMLElement>('.section'),
+        ].map((el) => ({
             el,
             position: 0,
             height: 0,
@@ -69,7 +74,7 @@ export class DNAScroll {
         }))
 
         this.getSizes()
-        this.sizes.on('scroller/resize', this.onResize)
+        this.sizes.on('resize', this.onResize)
         this.setTimeline()
     }
 
@@ -113,6 +118,7 @@ export class DNAScroll {
                 end: 'bottom bottom',
                 scrub: 1,
                 immediateRender: false,
+                markers: true,
             },
         })
 
@@ -126,7 +132,7 @@ export class DNAScroll {
                         y: cameraSettings[i].position.y,
                         z: cameraSettings[i].position.z,
                     },
-                    this.sections[i - 1].position
+                    this.sections[i - 1].position,
                 )
                 .to(
                     this.world.camera.rotation,
@@ -136,7 +142,7 @@ export class DNAScroll {
                         y: cameraSettings[i].rotation.y,
                         z: cameraSettings[i].rotation.z,
                     },
-                    '<'
+                    '<',
                 )
             if (particleSettings[i] && particleSettings[i].rotation) {
                 this.timeline.to(
@@ -145,7 +151,7 @@ export class DNAScroll {
                         duration: this.sections[i - 1].duration,
                         x: particleSettings[i].rotation.x,
                     },
-                    '<'
+                    '<',
                 )
             }
         }

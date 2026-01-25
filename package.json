@@ -24,8 +24,8 @@
       "cannon-es": "^0.20.0",
       "gsap": "^3.12.5",
       "lil-gui": "^0.18.2",
-      "postprocessing": "^6.35.3",
-      "three": "^0.174.0",
+      "postprocessing": "^6.38.2",
+      "three": "^0.182.0",
       "tseep": "^1.3.1",
       "tweakpane": "^4.0.3",
       "tweakpane-plugin-file-import": "^1.0.1"

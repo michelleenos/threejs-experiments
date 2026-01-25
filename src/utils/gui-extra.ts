@@ -50,6 +50,19 @@ export class GuiExtra extends GUI {
         return newFolder
     }
 
+    addThreeColor<T>(object: T, key: keyof T) {
+        let color = object[key]
+        if (!(color instanceof THREE.Color)) {
+            throw new Error(`${key.toString()} is not a THREE.Color object`)
+        }
+
+        return this.addColor({ color: color.getHexString() }, 'color')
+            .name(String(key))
+            .onChange((val: string) => {
+                color.setStyle(val)
+            })
+    }
+
     disable() {
         this.controllersRecursive().forEach((ctrl) => ctrl.disable())
         return this

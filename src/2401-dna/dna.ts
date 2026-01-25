@@ -13,10 +13,8 @@ let particles: GeoParticles
 let scroller: DNAScroll
 
 const sizes = new Sizes()
-const world = new World(sizes)
+const world = new World(sizes, { controls: false })
 world.renderer.outputColorSpace = THREE.SRGBColorSpace
-// @ts-ignore
-window.world = world
 
 const clock = new THREE.Clock()
 
