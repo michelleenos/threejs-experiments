@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { clamp, map } from '../utils'
 import Mouse from '../utils/Mouse'
 import WonkyShape, { WonkyShapeOptions } from './WonkyShape'
+import World from '~/utils/World'
 
 export type ColorCoordOpt = {
     start: number
@@ -26,29 +27,39 @@ export type RingOptions = {
     count?: number
     innerPosY?: number
     posY?: number
+    damping?: number
+    maxAcceleration?: number
     wonkyShapeOptions?: WonkyShapeOptions
     colorOpts?: ColorCoordOpts
 }
 
 const defaultColorCoordOpts: ColorCoordOpts = {
-    red: {
-        start: 0.67,
-        end: 0.05,
-        offset: 0.4,
-    },
-    green: {
-        start: -0.62,
-        end: 0.23,
-        offset: 0.23,
-    },
-    blue: {
-        start: 0,
-        end: 1.04,
-        offset: 0.25,
-    },
+    red: { start: 0.67, end: 0.05, offset: 0.4 },
+    green: { start: -0.62, end: 0.23, offset: 0.23 },
+    blue: { start: 0, end: 1.04, offset: 0.25 },
+}
+
+const ringOptionsDefaults: Required<RingOptions> = {
+    innerPosY: 6,
+    posY: 1,
+    outerOpacity: 0.5,
+    metalness: 0.5,
+    roughness: 0.5,
+    coneRadius: 7.6,
+    coneHeight: 22,
+    coneSegments: 100,
+    ringRadius: 50,
+    count: 14,
+    damping: 0.01,
+    maxAcceleration: 0.08,
+    colorOpts: defaultColorCoordOpts,
+    wonkyShapeOptions: {},
 }
 
 export default class Ring extends THREE.Group {
+    world: World
+    camera: THREE.Camera
+    mouse: Mouse
     outerGeometry: THREE.BufferGeometry
     outerMaterial: THREE.MeshStandardMaterial
     outerInstance: THREE.InstancedMesh<
@@ -57,8 +68,6 @@ export default class Ring extends THREE.Group {
     >
     wonkyShapes: WonkyShape[] = []
     colorOpts: ColorCoordOpts
-    camera: THREE.Camera
-    mouse: Mouse
     raycaster = new THREE.Raycaster()
     intersecting: number | null = null
     _coneRadius: number
@@ -73,41 +82,33 @@ export default class Ring extends THREE.Group {
     _wonkyShapeNoiseAmount: number
     _wonkyShapeNoiseSpeed: number
 
+    _wheelVelocity = 0
+    _wheelAcceleration = 0
+    damping: number
+    maxAcceleration: number
+
     needsUpdate = {
         innerMaterial: false,
         innerPos: false,
     }
 
-    constructor(
-        camera: THREE.Camera,
-        mouse: Mouse,
-        {
-            innerPosY = 6,
-            posY = 1,
-            outerOpacity = 0.5,
-            metalness = 0.5,
-            roughness = 0.5,
-            coneRadius = 7.6,
-            coneHeight = 22,
-            coneSegments = 100,
-            ringRadius = 50,
-            count = 14,
-            colorOpts = defaultColorCoordOpts,
-            wonkyShapeOptions = {},
-        }: RingOptions = {},
-    ) {
+    constructor(world: World, mouse: Mouse, paramOpts: RingOptions = {}) {
         super()
+        const opts = { ...ringOptionsDefaults, ...paramOpts }
         this.name = 'ring'
         this.mouse = mouse
-        this.camera = camera
-        this.colorOpts = colorOpts
-        this._ringRadius = ringRadius
-        this._coneRadius = coneRadius
-        this._coneHeight = coneHeight
-        this._coneSegments = coneSegments
-        this._innerPosY = innerPosY
+        this.world = world
+        this.camera = world.camera
+        this.colorOpts = opts.colorOpts
+        this._ringRadius = opts.ringRadius
+        this._coneRadius = opts.coneRadius
+        this._coneHeight = opts.coneHeight
+        this._coneSegments = opts.coneSegments
+        this._innerPosY = opts.innerPosY
+        this.damping = opts.damping
+        this.maxAcceleration = opts.maxAcceleration
 
-        this.position.y = posY
+        this.position.y = opts.posY
 
         this.outerGeometry = new THREE.ConeGeometry(
             this._coneRadius,
@@ -117,28 +118,30 @@ export default class Ring extends THREE.Group {
         this.outerGeometry.attributes.position.needsUpdate = true
         this.outerMaterial = new THREE.MeshStandardMaterial({
             color: '#fff',
-            opacity: outerOpacity,
-            metalness,
-            roughness,
+            opacity: opts.outerOpacity,
+            metalness: opts.metalness,
+            roughness: opts.roughness,
             transparent: true,
         })
         this.outerInstance = new THREE.InstancedMesh(
             this.outerGeometry,
             this.outerMaterial,
-            count,
+            opts.count,
         )
         this.outerInstance.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
         this.outerInstance.position.set(0, 0, 0)
 
-        this._wonkyRadius = wonkyShapeOptions.radius ?? 4
-        this._wonkyVary = wonkyShapeOptions.vary ?? 0.2
-        this._wonkyMetalness = wonkyShapeOptions.metalness ?? 0.5
-        this._wonkyRoughness = wonkyShapeOptions.roughness ?? 0.5
-        this._wonkyShapeNoiseAmount = wonkyShapeOptions.noiseAmount ?? 0.3
-        this._wonkyShapeNoiseSpeed = wonkyShapeOptions.noiseSpeed ?? 0.001
+        this._wonkyRadius = opts.wonkyShapeOptions.radius ?? 4
+        this._wonkyVary = opts.wonkyShapeOptions.vary ?? 0.2
+        this._wonkyMetalness = opts.wonkyShapeOptions.metalness ?? 0.5
+        this._wonkyRoughness = opts.wonkyShapeOptions.roughness ?? 0.5
+        this._wonkyShapeNoiseAmount = opts.wonkyShapeOptions.noiseAmount ?? 0.3
+        this._wonkyShapeNoiseSpeed = opts.wonkyShapeOptions.noiseSpeed ?? 0.001
         this.rebuild()
 
         this.add(this.outerInstance)
+
+        window.addEventListener('wheel', this.onWheel)
     }
 
     rebuild = () => {
@@ -159,7 +162,6 @@ export default class Ring extends THREE.Group {
 
         for (let i = 0; i < this.count; i++) {
             let wonkyShape = new WonkyShape(opts)
-
             this.wonkyShapes.push(wonkyShape)
             this.add(wonkyShape)
         }
@@ -223,9 +225,7 @@ export default class Ring extends THREE.Group {
     set wonkyRadius(value: number) {
         this._wonkyRadius = value
         // this.rebuild()
-        this.wonkyShapes.forEach((shape) => {
-            shape.setScale(value)
-        })
+        this.wonkyShapes.forEach((shape) => shape.setScale(value))
     }
     set wonkyVary(value: number) {
         this._wonkyVary = value
@@ -353,14 +353,11 @@ export default class Ring extends THREE.Group {
     findIntersectedIndex = () => {
         this.raycaster.setFromCamera(this.mouse.pos, this.camera)
         const intersects = this.raycaster.intersectObjects(this.children)
-        let intersected = intersects.find(
+        const intersected = intersects.find(
             (item) => item.object === this.outerInstance,
         )
 
-        if (intersected) {
-            let index = intersected.instanceId
-            return index
-        }
+        if (intersected) return intersected.instanceId
     }
 
     checkIntersects = () => {
@@ -395,8 +392,29 @@ export default class Ring extends THREE.Group {
         this.intersecting = null
     }
 
-    tick = (time: number) => {
+    onWheel = (e: WheelEvent) => {
+        this._wheelAcceleration = e.deltaY * 0.0001
+    }
+
+    tick = (time: number, dt: number) => {
         this.checkIntersects()
+
+        if (this._wheelAcceleration !== 0) {
+            this._wheelVelocity += this._wheelAcceleration
+            this._wheelVelocity = clamp(
+                this._wheelVelocity,
+                -this.maxAcceleration,
+                this.maxAcceleration,
+            )
+            this._wheelAcceleration = 0
+        }
+        if (this._wheelVelocity !== 0) {
+            this._wheelVelocity *= 1 - this.damping * dt
+            if (Math.abs(this._wheelVelocity) < 0.0001) {
+                this._wheelVelocity = 0
+            }
+            this.rotation.y += this._wheelVelocity
+        }
 
         for (let i = 0; i < this.count; i++) {
             let shape = this.wonkyShapes[i]

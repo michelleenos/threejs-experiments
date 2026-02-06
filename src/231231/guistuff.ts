@@ -1,9 +1,10 @@
 import { GUI } from 'lil-gui'
 import * as THREE from 'three'
 import Ring from './Ring'
-import Experience, { ExpParams } from './231231'
+import Experience from './231231'
 import presets from './presets'
 import { GuiExtra } from '~/utils/gui-extra'
+import RingSceneLights from './RingSceneLights'
 
 export const lightGui = (
     light: THREE.AmbientLight | THREE.DirectionalLight | THREE.PointLight,
@@ -39,27 +40,33 @@ export const lightGui = (
 }
 
 export const ringGui = (ring: Ring, gui: GuiExtra) => {
-    const f = gui.addFolder('Shapes').close()
+    const f = gui.addFolder('Ring').close()
 
-    f.add(ring.outerMaterial, 'metalness', 0, 1, 0.01)
-    f.add(ring.outerMaterial, 'roughness', 0, 1, 0.01)
-    f.add(ring.outerMaterial, 'opacity', 0, 1, 0.01)
-    f.add(ring, 'wonkyMetalness', 0, 1, 0.01)
-    f.add(ring, 'wonkyRoughness', 0, 1, 0.01)
-    f.add(ring, 'wonkyVary', 0, 5, 0.1)
-    f.add(ring, 'wonkyRadius', 0, 5, 0.1)
-    f.add(ring, 'coneRadius', 0, 50, 0.1)
-    f.add(ring, 'coneHeight', 0, 50, 0.1)
-    f.add(ring, 'coneSegments', 0, 200, 1)
-    f.add(ring, 'ringRadius', 0, 100, 1)
+    const fo = f.addFolder('outer shapes')
+
+    fo.add(ring.outerMaterial, 'metalness', 0, 1, 0.01)
+    fo.add(ring.outerMaterial, 'roughness', 0, 1, 0.01)
+    fo.add(ring.outerMaterial, 'opacity', 0, 1, 0.01)
+    fo.add(ring, 'coneRadius', 0, 50, 0.1)
+    fo.add(ring, 'coneHeight', 0, 50, 0.1)
+    fo.add(ring, 'coneSegments', 0, 200, 1)
+
+    const fs = f.addFolder('inner shapes')
+    fs.add(ring, 'wonkyMetalness', 0, 1, 0.01)
+    fs.add(ring, 'wonkyRoughness', 0, 1, 0.01)
+    fs.add(ring, 'wonkyVary', 0, 5, 0.1)
+    fs.add(ring, 'wonkyRadius', 0, 5, 0.1)
+    fs.add(ring, 'innerPosY', -10, 10, 0.1)
+    fs.add(ring, 'wonkyShapeNoiseSpeed', 0, 0.05, 0.0001).name('noiseSpeed')
+    fs.add(ring, 'wonkyShapeNoiseAmount', 0, 5, 0.01).name('noiseAmount')
+
     f.add(ring, 'count', 0, 100, 1)
-    f.add(ring, 'innerPosY', -10, 10, 0.1)
-    f.add(ring, 'wonkyShapeNoiseSpeed', 0, 0.05, 0.0001).name('noiseSpeed')
-    f.add(ring, 'wonkyShapeNoiseAmount', 0, 5, 0.01).name('noiseAmount')
-    // f.add(ring.position, 'y', -10, 10, 0.1)
+    f.add(ring, 'ringRadius', 0, 100, 1)
+    f.add(ring, 'damping', 0, 0.1, 0.0001)
+    f.add(ring, 'maxAcceleration', 0, 0.5, 0.01)
     f.addVec3(ring, 'position')
 
-    const colorsFolder = gui.addFolder('Shape Colors').close()
+    const colorsFolder = f.addFolder('Shape Colors').close()
     for (let color of Object.keys(ring.colorOpts) as ['red', 'green', 'blue']) {
         for (let opt of Object.keys(ring.colorOpts[color]) as [
             'start',
@@ -110,9 +117,9 @@ export const mirrorGui = (env: Experience) => {
     f.close()
 }
 
-export const sceneGui = (env: Experience) => {
+export function sceneGui(env: Experience) {
     const fold = env.gui.addFolder('Scene').close()
-    fold.add(env.timer, 'fps', -1, 120)
+    fold.add(env.timer, 'fps', -1, 120, 1).name('timer fps')
 
     let clearColor = new THREE.Color()
     env.world.renderer.getClearColor(clearColor)
@@ -135,16 +142,21 @@ export const sceneGui = (env: Experience) => {
     )
     fold.addVec3(env, 'target').onChange(env.setCameraAndControls)
 
-    fold.add(env, 'maxAcceleration', 0, 0.5, 0.01)
-    fold.add(env, 'damp', 0, 0.1, 0.001)
+    // fold.add(env, 'maxAcceleration', 0, 0.5, 0.01)
+    // fold.add(env, 'damp', 0, 0.1, 0.001)
+}
+
+export function sceneLightsGui(lights: RingSceneLights, gui: GuiExtra) {
+    const f = gui.addFolder('lights')
+    lightGui(lights.ambient, f)
+    lightGui(lights.directional, f, lights.dirHelper)
+    lightGui(lights.point, f, lights.pointHelper)
+    return f
 }
 
 const getGui = (env: Experience) => {
     sceneGui(env)
-    let lightsFolder = env.gui.addFolder('Lights').close()
-    lightGui(env.lights.ambient, lightsFolder)
-    lightGui(env.lights.directional, lightsFolder, env.lights.dirHelper)
-    lightGui(env.lights.point, lightsFolder, env.lights.pointHelper)
+    sceneLightsGui(env.lights, env.gui).close()
     ringGui(env.ring, env.gui)
     mirrorGui(env)
 
@@ -172,8 +184,6 @@ const getPreset = (env: Experience) => {
     env.world.renderer.getClearColor(clearColor)
 
     let preset = {
-        maxAcceleration: env.maxAcceleration,
-        damp: env.damp,
         clearColor: `#${clearColor.getHexString()}`,
         fov: env.world.camera.fov,
         lightOptions: {
@@ -219,6 +229,8 @@ const getPreset = (env: Experience) => {
             colorOpts: {
                 ...env.ring.colorOpts,
             },
+            damping: env.ring.damping,
+            maxAcceleration: env.ring.maxAcceleration,
         },
         mirrorOptions: {
             mirrorColor: env.mirror.mirrorColor,

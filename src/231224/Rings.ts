@@ -1,7 +1,6 @@
 import * as THREE from 'three'
 import { map, fract } from '../utils'
 import { easing } from '../utils/easings'
-import World from '../utils/World'
 import { ringsSceneAssets } from './assets'
 
 const { matcaps } = ringsSceneAssets

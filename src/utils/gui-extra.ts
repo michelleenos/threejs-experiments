@@ -1,6 +1,20 @@
 import GUI from 'lil-gui'
 import * as THREE from 'three'
 
+interface Vec3Like {
+    x: number
+    y: number
+    z: number
+}
+function isVec3Like(obj: unknown): obj is Vec3Like {
+    if (typeof obj !== 'object' || obj === null) return false
+    let t = obj as Vec3Like
+    if (typeof t.x !== 'number') return false
+    if (typeof t.y !== 'number') return false
+    if (typeof t.z !== 'number') return false
+    return true
+}
+
 export class GuiExtra extends GUI {
     addVec3<T>(
         object: T,
@@ -61,6 +75,26 @@ export class GuiExtra extends GUI {
             .onChange((val: string) => {
                 color.setStyle(val)
             })
+    }
+
+    addScale<T>(
+        object: T,
+        property: keyof T,
+        min?: number,
+        max?: number,
+        step?: number,
+    ) {
+        const prop = object[property]
+        if (!isVec3Like(prop)) {
+            throw new Error(`${String(property)} is not like a vec3`)
+        }
+        return this.add(prop, 'x', min, max, step)
+            .onChange((val: number) => {
+                prop.x = val
+                prop.y = val
+                prop.z = val
+            })
+            .name('scale')
     }
 
     disable() {

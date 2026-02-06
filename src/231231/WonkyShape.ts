@@ -12,6 +12,8 @@ export interface WonkyShapeOptions {
     vary?: number
 }
 
+// export const
+
 export default class WonkyShape extends THREE.Mesh<
     THREE.OctahedronGeometry,
     THREE.MeshStandardMaterial

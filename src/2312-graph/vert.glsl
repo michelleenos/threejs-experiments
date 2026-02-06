@@ -25,18 +25,18 @@ varying vec4 vModelPosition;
 varying vec4 vViewPosition;
 
 void main() {
-    vUv = uv;
+	vUv = uv;
 
-    vec3 pos = position;
-    vPosition = pos;
+	vec3 pos = position;
+	vPosition = pos;
 
-    vec4 mPosition = modelMatrix * vec4(pos, 1.0);
+	vec4 mPosition = modelMatrix * vec4(pos, 1.0);
 
-    vModelPosition = mPosition;
-    vec4 vPosition = viewMatrix * mPosition;
-    vViewPosition = vPosition;
-    vPosition.y += sin(vPosition.x * 0.5 + vPosition.y * 0.3) + cos(vPosition.z);
-    vec4 pPosition = projectionMatrix * vPosition;
+	vModelPosition = mPosition;
+	vec4 vPosition = viewMatrix * mPosition;
+	vViewPosition = vPosition;
+	vPosition.y += sin(vPosition.x * 0.5 + vPosition.y * 0.3) + cos(vPosition.z);
+	vec4 pPosition = projectionMatrix * vPosition;
 
-    gl_Position = pPosition;
+	gl_Position = pPosition;
 }
