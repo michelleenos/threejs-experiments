@@ -6,25 +6,24 @@ on:
 
 jobs:
     build:
-        runs-on: ubuntu-20.04
-        strategy:
-            matrix:
-                node-version: [18.x]
+        runs-on: ubuntu-latest
+        permissions:
+            id-token: write
+            pages: write
         steps:
-            - uses: actions/checkout@v3
-            - uses: pnpm/action-setup@v2
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
               name: Install pnpm
               with:
-                  version: 8
-                  run_install: true            
-            - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v4.0.0
+                  version: latest
+            - uses: actions/setup-node@v6
               with:
-                  node-version: ${{ matrix.node-version }}
-                  cache: 'pnpm'
-            - run: pnpm run build
-            - name: Deploy
-              uses: peaceiris/actions-gh-pages@v3
+                  cache: pnpm
+                  node-version: 24
+            - run: pnpm install
+            - run: pnpm build
+            - uses: actions/upload-pages-artifact@v3
               with:
-                  github_token: ${{ secrets.GITHUB_TOKEN }}
-                  publish_dir: ./dist
+                  path: dist
+            - uses: actions/deploy-pages@v4
+              id: deployment
