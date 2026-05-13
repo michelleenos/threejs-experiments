@@ -15,6 +15,7 @@ const params = {
     shapeRoughness: 0.5,
     fogColor: gray,
     floorColor: gray,
+    fogEnabled: true,
     directionalLight: {
         intensity: 1,
         color: '#ffffff',
@@ -29,7 +30,7 @@ const params = {
     scales: { min: 0.25, max: 0.5 },
 }
 
-const { sizes, stats, scene, renderer, camera, clock, resize } = setup()
+const { sizes, stats, scene, renderer, fog, camera, clock, resize } = setup()
 const { ambientLight, directionalLight } = makeLights(scene, params.ambientLight, params.directionalLight)
 window.addEventListener('resize', resize)
 
@@ -114,18 +115,22 @@ const raycaster = new THREE.Raycaster()
 const plane = new THREE.Plane(new THREE.Vector3(0, 1, -0.4))
 plane.translate(new THREE.Vector3(0, 1, 0))
 
-// const planeHelper = new THREE.PlaneHelper(plane, 30, 0xff0000)
-// scene.add(planeHelper)
+const planeHelper = new THREE.PlaneHelper(plane, 50, 0xff0000)
+planeHelper.visible = false
+scene.add(planeHelper)
 
 const onClick = () => {
     raycaster.setFromCamera(mouse, camera)
 
     const newBoxPos = new THREE.Vector3()
     const intersects = raycaster.ray.intersectPlane(plane, newBoxPos)
+    console.log(intersects)
 
     if (!intersects) return
     if (intersects.z > 7) newBoxPos.z = 7
     if (intersects.y > 5) newBoxPos.y = 5
+    if (intersects.x < -10) newBoxPos.x = -10
+    if (intersects.x > 10) newBoxPos.x = 10
 
     let i = (boxesData.lastAddedIndex + 1) % boxesData.max
     if (boxInstance.count < i + 1) {
@@ -173,17 +178,29 @@ let addBoxBtn = gui.add(guiBtns, 'add20Boxes')
 addSpheresBtn.disable()
 addBoxBtn.disable()
 
-let materialsFolder = gui.addFolder('Materials + Colors')
-materialsFolder.close()
-materialsFolder.add(params, 'floorMetalness', 0, 1, 0.01).onChange((val: number) => (floor.material.metalness = val))
-materialsFolder.add(params, 'floorRoughness', 0, 1, 0.01).onChange((val: number) => (floor.material.roughness = val))
-materialsFolder.add(params, 'shapeMetalness', 0, 1, 0.01).onChange((val: number) => (instanceMaterial.metalness = val))
-materialsFolder.add(params, 'shapeRoughness', 0, 1, 0.01).onChange((val: number) => (instanceMaterial.roughness = val))
-materialsFolder.addColor(params, 'fogColor').onChange((val: THREE.Color) => {
+let mf = gui.addFolder('Materials')
+mf.close()
+mf.add(params, 'floorMetalness', 0, 1, 0.01).onChange((val: number) => (floor.material.metalness = val))
+mf.add(params, 'floorRoughness', 0, 1, 0.01).onChange((val: number) => (floor.material.roughness = val))
+mf.add(params, 'shapeMetalness', 0, 1, 0.01).onChange((val: number) => (instanceMaterial.metalness = val))
+mf.add(params, 'shapeRoughness', 0, 1, 0.01).onChange((val: number) => (instanceMaterial.roughness = val))
+
+const wf = gui.addFolder('World')
+wf.addColor(params, 'fogColor').onChange((val: THREE.Color) => {
     scene.fog?.color.set(val)
     renderer.setClearColor(val)
 })
-materialsFolder.addColor(params, 'floorColor').onChange((val: THREE.Color) => floor.material.color.set(val))
+wf.add(params, 'fogEnabled').onChange((val: boolean) => {
+    if (val) {
+        scene.fog = fog
+    } else {
+        scene.fog = null
+    }
+})
+wf.add(fog, 'near', 0, 30, 1).name('fog.near')
+wf.add(fog, 'far', 0, 50).name('fog.far')
+wf.addColor(params, 'floorColor').onChange((val: THREE.Color) => floor.material.color.set(val))
+wf.add(planeHelper, 'visible').name('planeHelper.visible')
 
 guiLightFolder(gui, ambientLight, params.ambientLight, 'Ambient Light')
 guiLightFolder(gui, directionalLight, params.directionalLight, 'Directional Light')

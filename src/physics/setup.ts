@@ -18,7 +18,8 @@ export const setup = (fogColor = gray) => {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     document.body.appendChild(renderer.domElement)
 
-    scene.fog = new THREE.Fog(fogColor, 15, 20)
+    const fog = new THREE.Fog(fogColor, 15, 20)
+    scene.fog = fog
     renderer.setClearColor(fogColor)
 
     const camera = new THREE.PerspectiveCamera(75, sizes.x / sizes.y, 0.1, 60)
@@ -38,10 +39,13 @@ export const setup = (fogColor = gray) => {
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     }
 
-    return { sizes, scene, renderer, camera, clock, stats, resize }
+    return { sizes, scene, renderer, camera, clock, stats, resize, fog }
 }
 
-export type LightParams = { intensity?: number; color?: THREE.ColorRepresentation }
+export type LightParams = {
+    intensity?: number
+    color?: THREE.ColorRepresentation
+}
 export type HemiLightParams = {
     intensity?: number
     color?: THREE.ColorRepresentation
@@ -51,15 +55,15 @@ export type HemiLightParams = {
 export const makeLights = (
     scene: THREE.Scene,
     ambientLightParams: LightParams = {},
-    directionalLightParams: LightParams = {}
+    directionalLightParams: LightParams = {},
 ) => {
     const ambientLight = new THREE.AmbientLight(
         ambientLightParams.color,
-        ambientLightParams.intensity ?? 2
+        ambientLightParams.intensity ?? 2,
     )
     const directionalLight = new THREE.DirectionalLight(
         directionalLightParams.color,
-        directionalLightParams.intensity ?? 0.6
+        directionalLightParams.intensity ?? 0.6,
     )
 
     // const hemisphereLight = new THREE.HemisphereLight(
@@ -87,13 +91,11 @@ export const makeFloor = (
     scene: THREE.Scene,
     color: THREE.ColorRepresentation = 0xffdada,
     width: number = 10,
-    depth: number = 10
+    depth: number = 10,
 ) => {
     const plane = new THREE.Mesh(
         new THREE.PlaneGeometry(width, depth),
-        new THREE.MeshStandardMaterial({
-            color,
-        })
+        new THREE.MeshStandardMaterial({ color }),
     )
     plane.rotation.x = -Math.PI / 2
     plane.position.y = -2
@@ -103,7 +105,9 @@ export const makeFloor = (
     return plane
 }
 
-const isHemisphereLight = (light: THREE.Light): light is THREE.HemisphereLight => {
+const isHemisphereLight = (
+    light: THREE.Light,
+): light is THREE.HemisphereLight => {
     return light.hasOwnProperty('isHemisphereLight')
 }
 
@@ -112,7 +116,7 @@ export const guiLightFolder = (
     light: THREE.Light,
     params: LightParams | HemiLightParams,
     name: string,
-    position = false
+    position = false,
 ) => {
     let folder = gui.addFolder(name)
     folder.close()
@@ -129,7 +133,9 @@ export const guiLightFolder = (
     if (params.hasOwnProperty('groundColor') && isHemisphereLight(light)) {
         folder
             .addColor(params, 'groundColor')
-            .onChange((val: string) => light.groundColor.set(new THREE.Color(val)))
+            .onChange((val: string) =>
+                light.groundColor.set(new THREE.Color(val)),
+            )
     }
 
     if (position) {
