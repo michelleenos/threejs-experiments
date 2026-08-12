@@ -1,10 +1,9 @@
 import '../style.css'
 import * as THREE from 'three'
 import { ParametricGeometry } from 'three/examples/jsm/Addons.js'
-import Sizes from '../utils/Sizes'
-import Timer from '../utils/Timer'
+import Sizes from '../utils/sizes'
+import Timer from '../utils/timer'
 import World from '../utils/World'
-import { GUI } from 'lil-gui'
 import { GuiExtra } from '~/utils/gui-extra'
 
 const timer = new Timer()
