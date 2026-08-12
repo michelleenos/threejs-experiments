@@ -13,7 +13,11 @@ export default defineConfig({
         },
     },
 
-    plugins: [glsl()],
+    plugins: [
+        glsl({
+            removeDuplicatedImports: true,
+        }),
+    ],
     build: {
         outDir: '../dist',
         emptyOutDir: true,

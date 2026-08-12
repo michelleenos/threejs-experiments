@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { generatePoints } from '../utils/generate-points-sheet'
 import World from '../utils/World'
-import Sizes from '../utils/sizes'
+import Sizes from '../utils/Sizes'
 import Mouse from '../utils/Mouse'
 
 export type ParticleSheetParams = {
