@@ -1,4 +1,4 @@
-name: Vite build
+name: Vite build + deploy to pages
 
 on:
     push:
@@ -7,9 +7,6 @@ on:
 jobs:
     build:
         runs-on: ubuntu-latest
-        permissions:
-            id-token: write
-            pages: write
         steps:
             - uses: actions/checkout@v7
             - uses: pnpm/action-setup@v6
@@ -25,5 +22,15 @@ jobs:
             - uses: actions/upload-pages-artifact@v3
               with:
                   path: dist
-            - uses: actions/deploy-pages@v4
+    deploy:
+        needs: build
+        permissions:
+            pages: write
+            id-token: write
+        environment:
+            name: github-pages
+        runs-on: ubuntu-latest
+        steps:
+            - name: Deploy to GH Pages
               id: deployment
+              uses: actions/deploy-pages@v4
