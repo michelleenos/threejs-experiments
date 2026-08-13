@@ -2,7 +2,7 @@ import '../style.css'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/Addons.js'
 import World from '../utils/World'
-import Sizes from '../utils/Sizes'
+import Sizes from '../utils/sizes'
 import GUI from 'lil-gui'
 import Loader from '~/utils/loading-overlay'
 
@@ -73,9 +73,18 @@ gui.addColor(debg, 'clearColor').onChange((val: string) => {
     world.renderer.setClearColor(val)
 })
 
-gui.add(world.camera.position, 'x', -20, 20, 0.1).name('Camera X').listen().decimals(2)
-gui.add(world.camera.position, 'y', -20, 20, 0.1).name('Camera Y').listen().decimals(2)
-gui.add(world.camera.position, 'z', -20, 20, 0.1).name('Camera Z').listen().decimals(2)
+gui.add(world.camera.position, 'x', -20, 20, 0.1)
+    .name('Camera X')
+    .listen()
+    .decimals(2)
+gui.add(world.camera.position, 'y', -20, 20, 0.1)
+    .name('Camera Y')
+    .listen()
+    .decimals(2)
+gui.add(world.camera.position, 'z', -20, 20, 0.1)
+    .name('Camera Z')
+    .listen()
+    .decimals(2)
 gui.add(world.camera, 'fov', 0, 180, 1)
     .listen()
     .decimals(0)

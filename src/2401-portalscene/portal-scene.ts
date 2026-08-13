@@ -2,7 +2,7 @@ import '../style.css'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/Addons.js'
 import World from '../utils/World'
-import Sizes from '../utils/Sizes'
+import Sizes from '../utils/sizes'
 import GUI from 'lil-gui'
 import portalVertex from './glsl/portal/vertex.glsl'
 import portalFragment from './glsl/portal/fragment.glsl'
@@ -82,13 +82,22 @@ gltfLoader.load(baseUrl + '/scenes/portal/portal-merged.glb', (gltf) => {
         child instanceof THREE.Mesh && (child.material = bakedMaterial)
     })
 
-    const poleLightAMesh = portalScene.children.find((child) => child.name === 'poleLightA')
-    const poleLightBMesh = portalScene.children.find((child) => child.name === 'poleLightB')
-    const portalLightMesh = portalScene.children.find((child) => child.name === 'portalLight')
+    const poleLightAMesh = portalScene.children.find(
+        (child) => child.name === 'poleLightA',
+    )
+    const poleLightBMesh = portalScene.children.find(
+        (child) => child.name === 'poleLightB',
+    )
+    const portalLightMesh = portalScene.children.find(
+        (child) => child.name === 'portalLight',
+    )
 
-    poleLightAMesh instanceof THREE.Mesh && (poleLightAMesh.material = poleLightMaterial)
-    poleLightBMesh instanceof THREE.Mesh && (poleLightBMesh.material = poleLightMaterial)
-    portalLightMesh instanceof THREE.Mesh && (portalLightMesh.material = portalLightMaterial)
+    poleLightAMesh instanceof THREE.Mesh &&
+        (poleLightAMesh.material = poleLightMaterial)
+    poleLightBMesh instanceof THREE.Mesh &&
+        (poleLightBMesh.material = poleLightMaterial)
+    portalLightMesh instanceof THREE.Mesh &&
+        (portalLightMesh.material = portalLightMaterial)
 
     world.scene.add(portalScene)
 })
@@ -100,14 +109,17 @@ gltfLoader.load(baseUrl + '/scenes/portal/portal-merged.glb', (gltf) => {
 const debg = {
     poleLightColor: poleLightMaterial.color.getHexString(),
     clearColor: '#160e14',
-    portalColorStart: portalLightMaterial.uniforms.uColorStart.value.getHexString(),
+    portalColorStart:
+        portalLightMaterial.uniforms.uColorStart.value.getHexString(),
     portalColorEnd: portalLightMaterial.uniforms.uColorEnd.value.getHexString(),
 }
 world.renderer.setClearColor(debg.clearColor)
 gui.addColor(debg, 'clearColor').onChange((val: string) => {
     world.renderer.setClearColor(val)
 })
-gui.add(fireflies.material.uniforms.uSize, 'value', 0, 500, 1).name('firefliesSize')
+gui.add(fireflies.material.uniforms.uSize, 'value', 0, 500, 1).name(
+    'firefliesSize',
+)
 gui.addColor(debg, 'poleLightColor').onChange((val: string) => {
     poleLightMaterial.color.set(val)
 })
@@ -124,12 +136,24 @@ portalFolder.addColor(debg, 'portalColorEnd').onChange((val: string) => {
 portalFolder
     .add(portalLightMaterial.uniforms.uSpiralTightness, 'value', 0, 1, 0.01)
     .name('spiralTightness')
-portalFolder.add(portalLightMaterial.uniforms.uWaveSpeed, 'value', 0, 2, 0.01).name('waveSpeed')
-portalFolder.add(portalLightMaterial.uniforms.uSpiralSpeed, 'value', 0, 2, 0.01).name('spiralSpeed')
-portalFolder.add(portalLightMaterial.uniforms.uBlur, 'value', 0, 1, 0.01).name('blur')
-portalFolder.add(portalLightMaterial.uniforms.uGlowStart, 'value', 0, 1, 0.01).name('glowStart')
-portalFolder.add(portalLightMaterial.uniforms.uGlowEnd, 'value', 0, 1, 0.01).name('glowEnd')
-portalFolder.add(portalLightMaterial.uniforms.uDiv, 'value', 0.01, 1, 0.01).name('div')
+portalFolder
+    .add(portalLightMaterial.uniforms.uWaveSpeed, 'value', 0, 2, 0.01)
+    .name('waveSpeed')
+portalFolder
+    .add(portalLightMaterial.uniforms.uSpiralSpeed, 'value', 0, 2, 0.01)
+    .name('spiralSpeed')
+portalFolder
+    .add(portalLightMaterial.uniforms.uBlur, 'value', 0, 1, 0.01)
+    .name('blur')
+portalFolder
+    .add(portalLightMaterial.uniforms.uGlowStart, 'value', 0, 1, 0.01)
+    .name('glowStart')
+portalFolder
+    .add(portalLightMaterial.uniforms.uGlowEnd, 'value', 0, 1, 0.01)
+    .name('glowEnd')
+portalFolder
+    .add(portalLightMaterial.uniforms.uDiv, 'value', 0.01, 1, 0.01)
+    .name('div')
 
 gui.close()
 

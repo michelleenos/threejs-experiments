@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import '../style.css'
-import Sizes from '~/utils/Sizes'
+import Sizes from '~/utils/sizes'
 import { OrbitControls } from 'three/examples/jsm/Addons.js'
 import GUI from 'lil-gui'
 import vertexShader from './glsl/vert.glsl'
@@ -102,7 +102,7 @@ let debg = {
             shape.position.set(
                 (rect.left + rect.width * 0.5 - sizes.width * 0.5) * scale,
                 (-rect.top - rect.height * 0.5 + sizes.height * 0.5) * scale,
-                0
+                0,
             )
 
             // camera.lookAt(shape.position)
@@ -144,7 +144,9 @@ let debg = {
         this.getSizes()
 
         setTimeout(() => {
-            let rect = document.querySelector('.dom-shape')!.getBoundingClientRect()
+            let rect = document
+                .querySelector('.dom-shape')!
+                .getBoundingClientRect()
             let rectAspect = rect.width / rect.height
 
             let objectZ = Math.abs(camera.position.z - boxSize.z / 2)
@@ -182,9 +184,24 @@ let shapeFolder = gui.addFolder('shape')
 shapeFolder.add(box.scale, 'x').listen().decimals(2).disable()
 shapeFolder.add(box.scale, 'y').listen().decimals(2).disable()
 shapeFolder.add(box.scale, 'z').listen().decimals(2).disable()
-shapeFolder.add(box.position, 'x').listen().decimals(2).disable().name('position x')
-shapeFolder.add(box.position, 'y').listen().decimals(2).disable().name('position y')
-shapeFolder.add(box.position, 'z').listen().decimals(2).disable().name('position z')
+shapeFolder
+    .add(box.position, 'x')
+    .listen()
+    .decimals(2)
+    .disable()
+    .name('position x')
+shapeFolder
+    .add(box.position, 'y')
+    .listen()
+    .decimals(2)
+    .disable()
+    .name('position y')
+shapeFolder
+    .add(box.position, 'z')
+    .listen()
+    .decimals(2)
+    .disable()
+    .name('position z')
 
 let camFolder = gui.addFolder('camera')
 camFolder.add(camera.position, 'x').listen().decimals(2).disable()
@@ -193,9 +210,24 @@ camFolder.add(camera.position, 'z').listen().decimals(2).disable()
 camFolder.add(camera, 'fov', 1, 180).onChange(() => {
     camera.updateProjectionMatrix()
 })
-camFolder.add(camera.rotation, 'x').listen().decimals(2).disable().name('rotation x')
-camFolder.add(camera.rotation, 'y').listen().decimals(2).disable().name('rotation y')
-camFolder.add(camera.rotation, 'z').listen().decimals(2).disable().name('rotation z')
+camFolder
+    .add(camera.rotation, 'x')
+    .listen()
+    .decimals(2)
+    .disable()
+    .name('rotation x')
+camFolder
+    .add(camera.rotation, 'y')
+    .listen()
+    .decimals(2)
+    .disable()
+    .name('rotation y')
+camFolder
+    .add(camera.rotation, 'z')
+    .listen()
+    .decimals(2)
+    .disable()
+    .name('rotation z')
 
 gui.add(debg, 'currentShape', ['box', 'plane']).onChange(() => {
     let shape = debg.currentShape === 'box' ? box : plane

@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { MeshSurfaceSampler } from 'three/examples/jsm/Addons.js'
 import fragmentShader from './glsl/frag.glsl'
 import vertexShader from './glsl/vert.glsl'
-import Sizes from '../utils/Sizes'
+import Sizes from '../utils/sizes'
 import World from '../utils/World'
 
 export default class GeoParticles {

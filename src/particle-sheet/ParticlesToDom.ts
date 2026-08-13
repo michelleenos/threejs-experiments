@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { generatePoints } from '../utils/generate-points-sheet'
 import World from '../utils/World'
-import Sizes from '../utils/Sizes'
+import Sizes from '../utils/sizes'
 import Mouse from '../utils/Mouse'
 import { setTargetToCamera } from './face/three-to-dom'
 
@@ -82,7 +82,10 @@ export class DomParticles extends THREE.Points {
             positions[i * 3 + 1] = y
             positions[i * 3 + 2] = 0
         })
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+        geometry.setAttribute(
+            'position',
+            new THREE.BufferAttribute(positions, 3),
+        )
         return geometry
     }
 
@@ -101,11 +104,14 @@ export class DomParticles extends THREE.Points {
                 u_res: new THREE.Uniform(
                     new THREE.Vector2(
                         this.sizes.width * this.sizes.pixelRatio,
-                        this.sizes.height * this.sizes.pixelRatio
-                    )
+                        this.sizes.height * this.sizes.pixelRatio,
+                    ),
                 ),
                 u_planeRes: new THREE.Uniform(
-                    new THREE.Vector2(this.pointsData.width, this.pointsData.height)
+                    new THREE.Vector2(
+                        this.pointsData.width,
+                        this.pointsData.height,
+                    ),
                 ),
             },
             vertexShader: this.vertexShader,
@@ -118,13 +124,16 @@ export class DomParticles extends THREE.Points {
 
     createHelper = () => {
         let helper = new THREE.Mesh(
-            new THREE.PlaneGeometry(this.pointsData.width * 2, this.pointsData.height * 2),
+            new THREE.PlaneGeometry(
+                this.pointsData.width * 2,
+                this.pointsData.height * 2,
+            ),
             new THREE.MeshBasicMaterial({
                 color: 0xff0000,
                 transparent: true,
                 opacity: 0.5,
                 side: THREE.DoubleSide,
-            })
+            }),
         )
         helper.visible = false
         return helper
@@ -133,7 +142,7 @@ export class DomParticles extends THREE.Points {
     onResize = () => {
         this.material.uniforms.u_res.value = new THREE.Vector2(
             this.sizes.width * this.sizes.pixelRatio,
-            this.sizes.height * this.sizes.pixelRatio
+            this.sizes.height * this.sizes.pixelRatio,
         )
 
         setTargetToCamera({

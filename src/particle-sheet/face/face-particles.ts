@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import '~/style.css'
-import Sizes from '../../utils/Sizes'
+import Sizes from '../../utils/sizes'
 
 import vertexShader from './face-vert.glsl'
 import fragmentShader from './face-frag.glsl'
@@ -35,7 +35,10 @@ const speeds = new Float32Array(faceNormalized.coords.length)
 faceNormalized.coords.forEach((_, i) => {
     speeds[i] = Math.random() * 5 + 5
 })
-particles.geometry.setAttribute('a_speed', new THREE.Float32BufferAttribute(speeds, 1))
+particles.geometry.setAttribute(
+    'a_speed',
+    new THREE.Float32BufferAttribute(speeds, 1),
+)
 
 function tick() {
     stats.begin()

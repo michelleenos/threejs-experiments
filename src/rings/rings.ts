@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import '~/style.css'
 import World from '../utils/World'
-import Sizes from '../utils/Sizes'
+import Sizes from '../utils/sizes'
 import vertexShader from './vert.glsl'
 import fragmentShader from './frag.glsl'
 

@@ -4,7 +4,7 @@ import Mouse from '../utils/Mouse'
 import World from '../utils/World'
 import { createElement } from '../utils/dom'
 import { GuiWithLocalStorage } from '../utils/local-storage-gui'
-import Sizes from '../utils/Sizes'
+import Sizes from '../utils/sizes'
 import { Particles, type ParticleSheetParams } from './Particles'
 import './particle-sheet.css'
 

@@ -3,7 +3,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import World from '../utils/World'
 import GeoParticles from './geo-particles'
 import * as THREE from 'three'
-import Sizes from '../utils/Sizes'
+import Sizes from '../utils/sizes'
 
 gsap.registerPlugin(ScrollTrigger)
 

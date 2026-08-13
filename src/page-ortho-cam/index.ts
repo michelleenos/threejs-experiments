@@ -1,6 +1,6 @@
 import '../style.css'
 import * as THREE from 'three'
-import Sizes from '~/utils/Sizes'
+import Sizes from '~/utils/sizes'
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
 // renderer.setClearColor('#000')
@@ -103,7 +103,9 @@ class Boxes {
 
 const createBox = (clr?: string) => {
     const boxGeo = new THREE.BoxGeometry(1, 1, 1)
-    const boxMat = new THREE.MeshBasicMaterial({ color: clr || Math.random() * 0xffffff })
+    const boxMat = new THREE.MeshBasicMaterial({
+        color: clr || Math.random() * 0xffffff,
+    })
     return new THREE.Mesh(boxGeo, boxMat)
 }
 
@@ -161,7 +163,11 @@ animate()
 
 function ruler(step = 100) {
     let object = new THREE.Object3D()
-    var lineMtr = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 3, opacity: 1 })
+    var lineMtr = new THREE.LineBasicMaterial({
+        color: 0xffffff,
+        linewidth: 3,
+        opacity: 1,
+    })
 
     const points: THREE.Vector3[] = []
     points.push(new THREE.Vector3(-100, 0, 0))
@@ -188,7 +194,7 @@ function ruler(step = 100) {
         var textSprite = makeTextSprite(
             (i * -step).toString(),
             new THREE.Vector3(0.2, i * -step, 1),
-            Math.PI
+            Math.PI,
         )
 
         let oppGeo = new THREE.BufferGeometry().setFromPoints([
@@ -198,7 +204,7 @@ function ruler(step = 100) {
         var oppSprite = makeTextSprite(
             (i * step).toString(),
             new THREE.Vector3(0.2, i * step, 1),
-            Math.PI
+            Math.PI,
         )
         let oppLine = new THREE.Line(oppGeo, lineMtr)
 

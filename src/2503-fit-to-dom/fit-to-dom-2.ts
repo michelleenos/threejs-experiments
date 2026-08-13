@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import '../style.css'
-import Sizes from '~/utils/Sizes'
+import Sizes from '~/utils/sizes'
 import { OrbitControls } from 'three/examples/jsm/Addons.js'
 import GUI from 'lil-gui'
 import vertexShader from './glsl/vert.glsl'

@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import firefliesFragment from './glsl/fireflies/fragment.glsl'
 import firefliesVertex from './glsl/fireflies/vertex.glsl'
 import World from '../utils/World'
-import Sizes from '../utils/Sizes'
+import Sizes from '../utils/sizes'
 
 const getPositions = (count: number = 30) => {
     const positions = new Float32Array(count * 3)

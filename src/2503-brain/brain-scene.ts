@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { map } from '~/utils'
 import Mouse from '~/utils/Mouse'
-import Sizes from '~/utils/Sizes'
+import Sizes from '~/utils/sizes'
 import World from '~/utils/World'
 import { vertexColorsGradient } from './vertex-colors-gradient'
 
@@ -33,7 +33,10 @@ export class BrainScene {
     }[] = []
     phongMat!: THREE.MeshPhongMaterial
     brainGeo: THREE.BufferGeometry
-    brain: THREE.Mesh<THREE.BufferGeometry, THREE.MeshPhongMaterial | THREE.ShaderMaterial>
+    brain: THREE.Mesh<
+        THREE.BufferGeometry,
+        THREE.MeshPhongMaterial | THREE.ShaderMaterial
+    >
     camPos = {
         y: -0.3,
         z: 2,
@@ -53,7 +56,11 @@ export class BrainScene {
         this.brainGeo = brain
         this.mouse = mouse
 
-        this.world.camera.position.set(this.camPos.x, this.camPos.y, this.camPos.z)
+        this.world.camera.position.set(
+            this.camPos.x,
+            this.camPos.y,
+            this.camPos.z,
+        )
         this.world.renderer.setClearColor('#ffffff')
 
         this.createMaterials()
@@ -178,7 +185,7 @@ export class BrainScene {
                 1,
                 -1,
                 this.camPos.x - this.moveAmount,
-                this.camPos.x + this.moveAmount
+                this.camPos.x + this.moveAmount,
             )
             let camY = this.camPos.y
             camY = map(
@@ -186,14 +193,17 @@ export class BrainScene {
                 1,
                 -1,
                 this.camPos.y - this.moveAmount,
-                this.camPos.y + this.moveAmount
+                this.camPos.y + this.moveAmount,
             )
 
-            this.world.camera.position.lerp(new THREE.Vector3(camX, camY, camZ), this.moveSpeed)
+            this.world.camera.position.lerp(
+                new THREE.Vector3(camX, camY, camZ),
+                this.moveSpeed,
+            )
         } else {
             this.world.camera.position.lerp(
                 new THREE.Vector3(this.camPos.x, this.camPos.y, this.camPos.z),
-                this.moveSpeed
+                this.moveSpeed,
             )
         }
         this.world.camera.lookAt(0, 0, 0)
@@ -205,7 +215,7 @@ export class BrainScene {
         this.world.camera.position.set(
             this.camPos.x - this.moveAmount * 2,
             this.camPos.y - this.moveAmount * 1,
-            this.camPos.z - this.moveAmount * 4
+            this.camPos.z - this.moveAmount * 4,
         )
         window.requestAnimationFrame(this.tick)
     }
